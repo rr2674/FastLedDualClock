@@ -10,7 +10,8 @@ DualClock::DualClock(const char* ssid, const char* password)
     Serial.println("DualClock initialized in DEBUG mode")
 #endif
 
-    this->displayMode = DisplayMode::TIME
+    this->currentMode = DisplayMode::TIME;
+    this->currentColor = DisplayColor::COLOR_RED;
 }
 
 void DualClock::begin(CRGB* leds_, int numLeds_) {
@@ -45,7 +46,7 @@ void DualClock::update() {
     if (millis() - this->lastUpdate >= 1 * 1000) {
         this->lastUpdate = millis();
 
-        switch(this->displayMode) {
+        switch(this->currentMode) {
             case DisplayMode::TIME:
                 this->displayTime();
                 break;
@@ -57,17 +58,23 @@ void DualClock::update() {
     }
 }
 
-Mode getMode() const { return current; }
+Mode getMode() const { return this->currentMode; }
 
 
 void DualClock::switchMode() {
-        // Cycle through the enum values
-        current = static_cast<Mode>((static_cast<uint8_t>(current) + 1) % MODE_COUNT);
-        
-        Serial.printf("Switched mode to: %s\n", modeToString(current));
-    }
+    this->currentMode = static_cast<Mode>((static_cast<uint8_t>(this->currentMode) + 1) % MODE_COUNT);    
+    Serial.printf("DualClock() Switched mode to: %s\n", modeToString(this->currentMode));
+}
 
-// private methods
+void DualClock::switchColor() {
+    this->currentColor = static_cast<DisplayColor>((this->currentColor + 1) % COLOR_COUNT);
+    Serial.printf("DualClock() Color changed to %d\n", colorToString(this->currentColor));
+
+}
+
+/*
+** private methods
+*/
 bool DualClock::validateLayout(int numLeds) {
     int requiredPixels = 0;
 

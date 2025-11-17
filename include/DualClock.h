@@ -14,6 +14,19 @@ enum class DisplayMode : uint8_t {
     MODE_COUNT  // always keep this last
 };
 
+enum DisplayColor : uint8_t {
+    COLOR_RED,
+    COLOR_GREEN,
+    COLOR_BLUE,
+    COLOR_WHITE,
+    COLOR_YELLOW,
+    COLOR_ORANGE,
+    COLOR_CYAN,
+    COLOR_MAGENTA,
+    COLOR_COUNT    // always last, used for cycling
+};
+
+
 class DualityClock {
 public:
     DualityClock(const char* ssid, const char* password);
@@ -21,9 +34,8 @@ public:
     void begin(CRGB* leds_, int numLeds_);
     void update();
 
-    
     void switchMode();
-    void setLEDColor(RgbColor color);
+    void switchLEDColor();
 
 private:
     bool debug = false;
@@ -33,10 +45,10 @@ private:
     const char* wifiSSID;
     const char* wifiPassword;
 
-    DisplayMode displayMode;
     Timezone tz;
 
-    RgbColor ledColor;
+    DisplayMode  currentMode;
+    DisplayColor currentColor;
 
     unsigned long lastUpdate = 0; //Timing variable, we only want to update() to do something once every second
     unsigned long lastMinute = -1; // for detecing changes, we only want to update when time or date changes
@@ -51,11 +63,25 @@ private:
     void renderDigitElement(const DisplayElement& el, int number);
     void renderColonOrDash(const DisplayElement& el, bool on);
 
-    const char* modeToString(Mode m) const {
+    const char* modeToString(DisplayMode m) const {
         switch (m) {
             case TIME:    return "TIME";
             case DATE:    return "DATE";
             default:      return "UNKNOWN";
+        }
+    }
+
+    const char* colorToString(DisplayColor c) const {
+        switch (c) {
+            case CCOLOR_RED:    return "Red";
+            case COLOR_GREEN:   return "Green";
+            case COLOR_BLUE:    return "Blue";
+            case COLOR_WHITE:   return "White";
+            case COLOR_YELLOW:  return "Yellow";
+            case COLOR_ORANGE:  return "Orange";
+            case COLOR_CYAN:    return "CYAN";
+            case COLOR_MAGENTA: return "Magenta";
+            default:            return "UNKNOWN";
         }
     }
 };
