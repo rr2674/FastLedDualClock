@@ -3,12 +3,13 @@
 void MovingPixelDemo::begin(CRGB* leds_, int count) {
     this->leds = leds_;
     this->numLeds = count;
-    reset();
+    this->reset();
 }
 
 void MovingPixelDemo::reset() {
     this->pos = 0;
     this->lastMove = millis();
+    Serial.println("MovingPixelDemo reset");
 }
 
 void MovingPixelDemo::update() {

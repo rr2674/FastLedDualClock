@@ -9,16 +9,13 @@ class ModeManager {
 public:
     ModeManager() : current(MODE_DIGITS) {}
 
-    Mode get() const { return current; }
+    Mode getMode() const { return current; }
 
-    bool switchMode() {
-        Mode newMode = (current == MODE_PIXEL) ? MODE_DIGITS : MODE_PIXEL;
+    void switchMode() {
 
-        if (newMode != current) {
-            current = newMode;
-            return true;
-        }
-        return false;
+        current = (current == MODE_PIXEL) ? MODE_DIGITS : MODE_PIXEL;
+        Serial.printf("Switched mode to: %s\n",
+                      (current == MODE_PIXEL) ? "PIXEL" : "DIGITS");
     }
 
 private:
