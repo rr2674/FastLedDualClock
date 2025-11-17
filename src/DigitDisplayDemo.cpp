@@ -5,12 +5,13 @@ extern DisplayElement timeDisplay[];
 
 void DigitDisplayDemo::begin(CRGB* leds_, int numLeds_) {
     this->leds = leds_;
-    this->lastUpdate = millis();
 
     if (!validateLayout(numLeds_)) {
         Serial.println("ERROR: LED strip is too short for DigitDisplayDemo!");
     }
 
+    this->reset();
+    
 #if defined(DEBUG_MODE)
     this->debug = true;
     Serial.println("DigitDisplayDemo initialized in DEBUG mode");
@@ -43,6 +44,7 @@ bool DigitDisplayDemo::validateLayout(int numLeds) {
 void DigitDisplayDemo::reset() {
     this->lastUpdate = 0;
     this->currentNumber = -1;
+    Serial.println("DigitDisplayDemo reset");
 }
 
 void DigitDisplayDemo::update() {

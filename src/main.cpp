@@ -8,7 +8,7 @@
 #include "DisplayModel.h"
 
 // --- Configuration ---
-#define TEST_MODE_BUTTON_PIN 14
+#define TEST_MODE_BUTTON_PIN 27
 #define LED_DATA_PIN 5
 #define NUM_LEDS 120
 #define LED_TYPE WS2811
@@ -27,8 +27,6 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  modeButton.begin();
-
   FastLED.addLeds<LED_TYPE, LED_DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(64);
 
@@ -40,24 +38,17 @@ void loop() {
 
     if (modeButton.pressed()) {
 
-        bool changed = modeManager.switchMode();
+        modeManager.switchMode();
 
-        if (changed) {
-            FastLED.clear();
-            FastLED.show();
+        pixelDemo.reset();
+        digitDemo.reset();
 
-            // Call the right reset()
-            if (modeManager.get() == MODE_PIXEL) {
-                pixelDemo.reset();
-                Serial.println("Mode switched → PIXEL");
-            } else {
-                digitDemo.reset();
-                Serial.println("Mode switched → DIGITS");
-            }
-        }
+        FastLED.clear();
+        FastLED.show();
+
     }
 
-    switch (modeManager.get()) {
+    switch (modeManager.getMode()) {
         case MODE_PIXEL:
             pixelDemo.update();
             break;
