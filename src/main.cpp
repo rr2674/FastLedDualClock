@@ -23,6 +23,12 @@ ModeManager modeManager;
 MovingPixelDemo pixelDemo;
 DigitDisplayDemo digitDemo;
 
+// WiFi credentials from build flags
+const char* WIFI_SSID = WIFI_SSID_OVERRIDE;
+const char* WIFI_PASSWORD = WIFI_PASSWORD_OVERRIDE;
+
+DualClock dualClock(WIFI_SSID, WIFI_PASSWORD);
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -55,6 +61,10 @@ void loop() {
 
         case MODE_DIGITS:
             digitDemo.update();
+            break;
+        
+        case MODE_CLOCK:
+            dualClock.update();
             break;
     }
 

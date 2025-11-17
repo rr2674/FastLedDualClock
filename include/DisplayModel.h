@@ -42,3 +42,18 @@ static DisplayElement timeDisplay[] = {
 };
 
 static const int NUM_TIME_DISPLAY_ELEMENTS = sizeof(timeDisplay) / sizeof(timeDisplay[0]);
+
+// A–G segment mapping for digits 0–9
+static const uint8_t digitSegmentMap[10][7] = {
+  // A,B,C,D,E,F,G
+  {1,1,1,0,1,1,1}, // 0
+  {1,0,0,0,1,0,0}, // 1
+  {1,1,0,1,0,1,1}, // 2
+  {1,1,0,1,1,1,0}, // 3
+  {1,0,1,1,1,0,0}, // 4
+  {0,1,1,1,1,1,0}, // 5
+  {0,1,1,1,1,1,1}, // 6
+  {1,1,0,0,1,0,0}, // 7
+  {1,1,1,1,1,1,1}, // 8
+  {1,1,1,1,1,0,0}  // 9
+};

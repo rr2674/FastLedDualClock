@@ -11,7 +11,7 @@ void DigitDisplayDemo::begin(CRGB* leds_, int numLeds_) {
     }
 
     this->reset();
-    
+
 #if defined(DEBUG_MODE)
     this->debug = true;
     Serial.println("DigitDisplayDemo initialized in DEBUG mode");
@@ -77,21 +77,6 @@ void DigitDisplayDemo::update() {
         FastLED.show();
     }
 }
-
-  // A–G segment mapping for digits 0–9
-static const uint8_t digitSegmentMap[10][7] = {
-  // A,B,C,D,E,F,G
-  {1,1,1,0,1,1,1}, // 0
-  {1,0,0,0,1,0,0}, // 1
-  {1,1,0,1,0,1,1}, // 2
-  {1,1,0,1,1,1,0}, // 3
-  {1,0,1,1,1,0,0}, // 4
-  {0,1,1,1,1,1,0}, // 5
-  {0,1,1,1,1,1,1}, // 6
-  {1,1,0,0,1,0,0}, // 7
-  {1,1,1,1,1,1,1}, // 8
-  {1,1,1,1,1,0,0}  // 9
-};
 
 void DigitDisplayDemo::renderDigitElement(const DisplayElement& el, int number) {
     const Element& shape = getElementShape(el.type);
