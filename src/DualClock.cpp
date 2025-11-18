@@ -47,12 +47,12 @@ void DualClock::update() {
     if (millis() - this->lastUpdate >= 1 * 1000) {
         this->lastUpdate = millis();
 
-        switch(this->currentMode) {
-            case DisplayMode::TIME:
+        switch(modeManager.get()) {
+            case DualClockModeManager::Mode::TIME:
                 this->displayTime();
                 break;
 
-            case DisplayMode::DATE:
+            case DualClockModeManager::Mode::DATE:
                 this->displayDate();
                 break;
         }
@@ -60,13 +60,8 @@ void DualClock::update() {
 }
 
 void DualClock::reset() {
-    this->currentMode = DisplayMode::TIME;
+    modeManager.reset();
     Serial.println("DualClock reset");
-}
-
-void DualClock::switchMode() {
-    this->currentMode = static_cast<DisplayMode>((static_cast<int>(this->currentMode) + 1) % static_cast<int>(DisplayMode::DISPLAY_MODE_COUNT));
-    Serial.printf("DualClock() Switched mode to: %s\n", modeToString(this->currentMode));
 }
 
 /*
