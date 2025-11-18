@@ -8,13 +8,7 @@
 
 #include "DisplayModel.h"
 #include "ColorManager.h"
-
-//todo: make this typedef and array?
-enum class DisplayMode : uint8_t {
-    TIME,
-    DATE,
-    DISPLAY_MODE_COUNT  // always keep this last
-};
+#include "DualClockModeManager.h"
 
 
 class DualClock {
@@ -24,8 +18,10 @@ public:
     void begin(CRGB* leds_, int numLeds_);
     void update();
     void reset();
-    
-    void switchMode();
+
+    void switchMode() {
+        modeManager.next();
+    };
     void switchLEDColor() {
         colorManager.next();
     }
@@ -44,7 +40,7 @@ private:
 
     Timezone tz;
 
-    DisplayMode  currentMode;
+    DualClockModeManager  modeManager;
     ColorManager colorManager;
 
     unsigned long lastUpdate = 0; //Timing variable, we only want to update() to do something once every second
@@ -59,13 +55,5 @@ private:
     void displayDigit(int digit, int offset);
     void renderDigitElement(const DisplayElement& el, int number);
     void renderColonOrDash(const DisplayElement& el, bool on);
-
-    const char* modeToString(DisplayMode m) const {
-        switch (m) {
-            case DisplayMode::TIME:    return "TIME";
-            case DisplayMode::DATE:    return "DATE";
-            default:      return "UNKNOWN";
-        }
-    }
 
 };
