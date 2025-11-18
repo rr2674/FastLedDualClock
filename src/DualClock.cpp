@@ -1,6 +1,6 @@
 #include "DualClock.h"
 #include "DisplayModel.h"
-#include "ColorTable.h"
+#include "ColorManager.h"
 
 DualClock::DualClock(const char* ssid, const char* password)
     : wifiSSID(ssid),
@@ -11,8 +11,8 @@ DualClock::DualClock(const char* ssid, const char* password)
     Serial.println("DualClock initialized in DEBUG mode");
 #endif
 
-    this->currentMode = DisplayMode::TIME;
-    this->currentColor = DisplayColor::COLOR_RED;
+
+    this->reset();
 }
 
 void DualClock::begin(CRGB* leds_, int numLeds_) {
@@ -28,7 +28,7 @@ void DualClock::begin(CRGB* leds_, int numLeds_) {
     }
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
-        if (this.debug) {
+        if (this->debug) {
             Serial.print(".");
         }
     }
@@ -59,19 +59,20 @@ void DualClock::update() {
     }
 }
 
-void DualClock::switchMode() {
-    this->currentMode = static_cast<DisplayMode>((static_cast<uint8_t>(this->currentMode) + 1) % MODE_COUNT);    
-    Serial.printf("DualClock() Switched mode to: %s\n", modeToString(this->currentMode));
+void DualClock::reset() {
+    this->currentMode = DisplayMode::TIME;
+    Serial.println("DualClock reset");
 }
 
-void DualClock::switchColor() {
-    this->colorIndex = (this->colorIndex + 1) % COLOR_COUNT);
-    Serial.printf("DualClock() Color changed to %d\n", colorTable[colorIndex].name);
+void DualClock::switchMode() {
+    this->currentMode = static_cast<DisplayMode>((static_cast<int>(this->currentMode) + 1) % static_cast<int>(DisplayMode::DISPLAY_MODE_COUNT));
+    Serial.printf("DualClock() Switched mode to: %s\n", modeToString(this->currentMode));
 }
 
 /*
 ** private methods
 */
+
 bool DualClock::validateLayout(int numLeds) {
     int requiredPixels = 0;
 
@@ -155,24 +156,49 @@ void DualClock::displayTime() {
     int minVal  = tinfo->tm_min;
     int secVal  = tinfo->tm_sec;
 
-    if (minVal != this->lastMinute) {
-        // min_ones
-        renderDigitElement(timeDisplay[0], minVal % 10);
-        // min_tens
-        renderDigitElement(timeDisplay[1], minVal / 10);
-        // hour_ones
-        renderDigitElement(timeDisplay[4], hourVal % 10);
-        // hour_tens
-        renderDigitElement(timeDisplay[5], hourVal / 10);
-
-        this->lastMinute = minVal;
-    }
+    // min_ones
+    renderDigitElement(timeDisplay[0], minVal % 10);
+    // min_tens
+    renderDigitElement(timeDisplay[1], minVal / 10);
+    // hour_ones
+    renderDigitElement(timeDisplay[4], hourVal % 10);
+    // hour_tens
+    renderDigitElement(timeDisplay[5], hourVal / 10);
 
     // Blink colon
     renderColonOrDash(timeDisplay[2], secVal % 2 == 0);
     renderColonOrDash(timeDisplay[3], secVal % 2 == 0);
 
     FastLED.show();
+
+    if (this->debug) {
+        Serial.printf("[DEBUG] time[hh:mm] %02d:%02d\n", hourVal, minVal);
+    }
+
+}
+
+void DualClock::displayDate() {
+    time_t now = time(nullptr);
+    struct tm* tinfo = localtime(&now);
+
+    int dayVal   = tinfo->tm_mday;
+    int monthVal = tinfo->tm_mon + 1;
+
+    // day_ones
+    renderDigitElement(dateDisplay[0], dayVal % 10);
+    // day_tens
+    renderDigitElement(dateDisplay[1], dayVal / 10);
+    // month_ones
+    renderDigitElement(dateDisplay[4], monthVal % 10);
+    // month_tens
+    renderDigitElement(dateDisplay[5], monthVal / 10);
+
+
+    FastLED.show();
+
+    if (this->debug) {
+        Serial.printf("[DEBUG] Date[mm-dd] %02d-%02d\n", dayVal, monthVal);
+    }
 }
 
 void DualClock::renderDigitElement(const DisplayElement& el, int number) {
@@ -180,31 +206,28 @@ void DualClock::renderDigitElement(const DisplayElement& el, int number) {
 
     for (int seg = 0; seg < shape.segments; seg++) {
         bool isOn = digitSegmentMap[number][seg];
-        CRGB segColor = isOn ? el.color  : CRGB::Black;
+        CRGB segColor = isOn ? this->colorManager.getColor() : CRGB::Black;
 
         int segmentStart = el.offset + (seg * shape.pixels);
         fill_solid(&leds[segmentStart], shape.pixels, segColor);
     }
 
     if (this->debug) {
-        Serial.printf("Rendered %s digit %d at offset %d\n", el.name, number, el.offset);
+        Serial.printf("[DEBUG] Rendered %s digit %d at offset %d\n", el.name, number, el.offset);
     }
 }
 
 void DualClock::renderColonOrDash(const DisplayElement& el, bool on) {
-    //todo: add logic to support blink
     const Element& shape = getElementShape(el.type);
+
+    CRGB c = on ? this->colorManager.getColor() : CRGB::Black;
 
     for (int seg = 0; seg < shape.segments; seg++) {
         int segmentStart = el.offset + (seg * shape.pixels);
-        fill_solid(&leds[segmentStart], shape.pixels, el.color);
+        fill_solid(&leds[segmentStart], shape.pixels, c);
     }
 
     if (this->debug) {
-        Serial.printf("Rendered %s at offset %d\n", el.name, el.offset);
+        Serial.printf("[DEBUG] Rendered %s at offset %d\n", el.name, el.offset);
     }
-}
-
-CRGB DualClock::currentColor() const {
-    return colorTable[currentColorIndex].ledColor;
 }

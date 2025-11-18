@@ -15,7 +15,7 @@ struct Element {
 
 static const Element digit = { 7, 4 };
 static const Element colon = { 1, 1 };
-static const Element dash  = { 1, 2 };
+static const Element dash  = { 1, 1 };
 
 inline const Element& getElementShape(DisplayElementType type) {
     switch (type) {
@@ -41,8 +41,17 @@ static constexpr DisplayElement timeDisplay[] = {
     { "hour_ones",    DIGIT, 63, CRGB::Blue },
     { "hour_tens",    DIGIT, 92, CRGB::White }
 };
-
 static const int NUM_TIME_DISPLAY_ELEMENTS = sizeof(timeDisplay) / sizeof(timeDisplay[0]);
+
+static constexpr DisplayElement dateDisplay[] = {
+    { "day_ones",     DIGIT,  0, CRGB::Red },
+    { "day_tens",     DIGIT, 29, CRGB::Green },
+    { "dash_right",   DASH,  57, CRGB::Yellow },
+    { "dash_left",    DASH,  62, CRGB::Yellow },
+    { "month_ones",   DIGIT, 63, CRGB::Blue },
+    { "month_tens",   DIGIT, 92, CRGB::White }
+};
+static const int NUM_DATE_DISPLAY_ELEMENTS = sizeof(dateDisplay) / sizeof(dateDisplay[0]);
 
 // A–G segment mapping for digits 0–9
 static const uint8_t digitSegmentMap[10][7] = {

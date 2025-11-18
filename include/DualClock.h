@@ -7,13 +7,13 @@
 #include <ArduinoJson.h>
 
 #include "DisplayModel.h"
-#include "ColorTable.h"
+#include "ColorManager.h"
 
 //todo: make this typedef and array?
 enum class DisplayMode : uint8_t {
     TIME,
     DATE,
-    MODE_COUNT  // always keep this last
+    DISPLAY_MODE_COUNT  // always keep this last
 };
 
 
@@ -23,13 +23,15 @@ public:
 
     void begin(CRGB* leds_, int numLeds_);
     void update();
-
+    void reset();
+    
     void switchMode();
-    void switchLEDColor();
+    void switchLEDColor() {
+        colorManager.next();
+    }
 
-    //todo: why here and not in .cpp file?
-    CRGB getColor() const {
-        return colorTable[colorIndex].ledColor;
+    CRGB getLEDColor() const {
+        return colorManager.getColor();
     }
 
 private:
@@ -43,14 +45,13 @@ private:
     Timezone tz;
 
     DisplayMode  currentMode;
-
-    uint8_t colorIndex = 0;
+    ColorManager colorManager;
 
     unsigned long lastUpdate = 0; //Timing variable, we only want to update() to do something once every second
-    unsigned long lastMinute = -1; // for detecing changes, we only want to update when time or date changes
 
     // use HTTP to sync with NTP servers
     bool syncTimeHTTP();
+    bool validateLayout(int numLeds);
 
     void displayTime();
     void displayDate();
@@ -61,10 +62,10 @@ private:
 
     const char* modeToString(DisplayMode m) const {
         switch (m) {
-            case TIME:    return "TIME";
-            case DATE:    return "DATE";
+            case DisplayMode::TIME:    return "TIME";
+            case DisplayMode::DATE:    return "DATE";
             default:      return "UNKNOWN";
         }
     }
 
-
+};

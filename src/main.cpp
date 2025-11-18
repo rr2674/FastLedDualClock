@@ -9,8 +9,8 @@
 #include "DualClock.h"
 
 // --- Configuration ---
-#define CHANGE_APP_BUTTON_PIN 27
-#define CHANGE_DATE_TIME_COLOR_BUTTON_PIN 28
+#define CHANGE_APP_BUTTON_PIN 26
+#define CHANGE_DATE_TIME_COLOR_BUTTON_PIN 25
 #define LED_DATA_PIN 5
 #define NUM_LEDS 120
 #define LED_TYPE WS2811
@@ -60,19 +60,19 @@ void loop() {
     }
 
     if (colorButton.pressed()) {
-        dualClock.switchColor()();
+        dualClock.switchLEDColor();
     }
 
     switch (modeManager.getMode()) {
-        case MODE_PIXEL:
+        case Mode::MODE_PIXEL:
             pixelDemo.update();
             break;
 
-        case MODE_DIGITS:
+        case Mode::MODE_DIGITS:
             digitDemo.update();
             break;
         
-        case MODE_CLOCK:
+        case Mode::MODE_DUALCLOCK:
             dualClock.update();
             break;
     }
