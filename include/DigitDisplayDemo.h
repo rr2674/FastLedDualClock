@@ -1,4 +1,3 @@
-// DigitDisplayDemo.h
 #pragma once
 #include <FastLED.h>
 #include "DisplayModel.h"

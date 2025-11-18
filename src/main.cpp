@@ -6,9 +6,11 @@
 #include "MovingPixelDemo.h"
 #include "DigitDisplayDemo.h"
 #include "DisplayModel.h"
+#include "DualClock.h"
 
 // --- Configuration ---
-#define TEST_MODE_BUTTON_PIN 27
+#define CHANGE_APP_BUTTON_PIN 26
+#define CHANGE_DATE_TIME_COLOR_BUTTON_PIN 25
 #define LED_DATA_PIN 5
 #define NUM_LEDS 120
 #define LED_TYPE WS2811
@@ -16,12 +18,19 @@
 
 CRGB leds[NUM_LEDS];
 
-// --- Global objects ---
-Button modeButton(TEST_MODE_BUTTON_PIN);
+Button modeButton(CHANGE_APP_BUTTON_PIN);
 ModeManager modeManager;
+
+Button colorButton(CHANGE_DATE_TIME_COLOR_BUTTON_PIN);
 
 MovingPixelDemo pixelDemo;
 DigitDisplayDemo digitDemo;
+
+// WiFi credentials from build flags
+const char* WIFI_SSID = WIFI_SSID_OVERRIDE;
+const char* WIFI_PASSWORD = WIFI_PASSWORD_OVERRIDE;
+
+DualClock dualClock(WIFI_SSID, WIFI_PASSWORD);
 
 void setup() {
   Serial.begin(115200);
@@ -32,6 +41,8 @@ void setup() {
 
   pixelDemo.begin(leds, NUM_LEDS);
   digitDemo.begin(leds, NUM_LEDS);
+  dualClock.begin(leds, NUM_LEDS);
+
 }
 
 void loop() {
@@ -48,13 +59,21 @@ void loop() {
 
     }
 
+    if (colorButton.pressed()) {
+        dualClock.switchLEDColor();
+    }
+
     switch (modeManager.getMode()) {
-        case MODE_PIXEL:
+        case Mode::MODE_PIXEL:
             pixelDemo.update();
             break;
 
-        case MODE_DIGITS:
+        case Mode::MODE_DIGITS:
             digitDemo.update();
+            break;
+        
+        case Mode::MODE_DUALCLOCK:
+            dualClock.update();
             break;
     }
 
