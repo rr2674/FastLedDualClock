@@ -1,6 +1,7 @@
 #pragma once
 #include <FastLED.h>
 
+//todo: let's make a namespace for this
 enum DisplayElementType {
     DIGIT,
     COLON,
@@ -32,7 +33,7 @@ struct DisplayElement {
     CRGB color;
 };
 
-static DisplayElement timeDisplay[] = {
+static constexpr DisplayElement timeDisplay[] = {
     { "min_ones",     DIGIT,  0, CRGB::Red },
     { "min_tens",     DIGIT, 29, CRGB::Green },
     { "colon_bottom", COLON, 58, CRGB::Yellow },

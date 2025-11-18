@@ -1,13 +1,14 @@
 #include "DualClock.h"
 #include "DisplayModel.h"
+#include "ColorTable.h"
 
 DualClock::DualClock(const char* ssid, const char* password)
-    : wifiSSID(ssid), 
-      wifiPassword(password)
+    : wifiSSID(ssid),
+     wifiPassword(password)
 {
 #ifdef DEBUG_MODE
     this->debug = true;
-    Serial.println("DualClock initialized in DEBUG mode")
+    Serial.println("DualClock initialized in DEBUG mode");
 #endif
 
     this->currentMode = DisplayMode::TIME;
@@ -18,7 +19,7 @@ void DualClock::begin(CRGB* leds_, int numLeds_) {
     this->leds = leds_;
 
     if (!validateLayout(numLeds_)) {
-        Serial.println("Warning: LED strip is too short for DualityClock!");
+        Serial.println("Warning: LED strip is too short for DualClock!");
     }
 
     WiFi.begin(this->wifiSSID, this->wifiPassword);
@@ -58,18 +59,14 @@ void DualClock::update() {
     }
 }
 
-Mode getMode() const { return this->currentMode; }
-
-
 void DualClock::switchMode() {
-    this->currentMode = static_cast<Mode>((static_cast<uint8_t>(this->currentMode) + 1) % MODE_COUNT);    
+    this->currentMode = static_cast<DisplayMode>((static_cast<uint8_t>(this->currentMode) + 1) % MODE_COUNT);    
     Serial.printf("DualClock() Switched mode to: %s\n", modeToString(this->currentMode));
 }
 
 void DualClock::switchColor() {
-    this->currentColor = static_cast<DisplayColor>((this->currentColor + 1) % COLOR_COUNT);
-    Serial.printf("DualClock() Color changed to %d\n", colorToString(this->currentColor));
-
+    this->colorIndex = (this->colorIndex + 1) % COLOR_COUNT);
+    Serial.printf("DualClock() Color changed to %d\n", colorTable[colorIndex].name);
 }
 
 /*
@@ -150,7 +147,7 @@ bool DualClock::syncTimeHTTP() {
     return true;
 }
 
-void DualityClock::displayTime() {
+void DualClock::displayTime() {
     time_t now = time(nullptr);
     struct tm* tinfo = localtime(&now);
 
@@ -158,30 +155,27 @@ void DualityClock::displayTime() {
     int minVal  = tinfo->tm_min;
     int secVal  = tinfo->tm_sec;
 
-    // Only redraw digits if hour or minute changed
     if (minVal != this->lastMinute) {
-
-        if (this->debug) {
-            Serial.printf("[DEBUG] Minute changed, digits redrawn: %02d:%02d\n", hourVal, minVal);
-        }
-
-        //todo: add logic to display digits for min_ones, min_tens, hour_ones, hour_tens
+        // min_ones
+        renderDigitElement(timeDisplay[0], minVal % 10);
+        // min_tens
+        renderDigitElement(timeDisplay[1], minVal / 10);
+        // hour_ones
+        renderDigitElement(timeDisplay[4], hourVal % 10);
+        // hour_tens
+        renderDigitElement(timeDisplay[5], hourVal / 10);
 
         this->lastMinute = minVal;
-
-        if (this->DEBUG) {
-            Serial.printf("[DEBUG] Time: %02d:%02d:%02d\n", hourVal, minVal, secVal);
-        }
     }
 
-    // Blink colon every second
-    this->displayColon(secVal % 2 == 0);
+    // Blink colon
+    renderColonOrDash(timeDisplay[2], secVal % 2 == 0);
+    renderColonOrDash(timeDisplay[3], secVal % 2 == 0);
 
     FastLED.show();
-
 }
 
-void DigitDisplayDemo::renderDigitElement(const DisplayElement& el, int number) {
+void DualClock::renderDigitElement(const DisplayElement& el, int number) {
     const Element& shape = getElementShape(el.type);
 
     for (int seg = 0; seg < shape.segments; seg++) {
@@ -197,7 +191,8 @@ void DigitDisplayDemo::renderDigitElement(const DisplayElement& el, int number) 
     }
 }
 
-void DigitDisplayDemo::renderColonOrDash(const DisplayElement& el) {
+void DualClock::renderColonOrDash(const DisplayElement& el, bool on) {
+    //todo: add logic to support blink
     const Element& shape = getElementShape(el.type);
 
     for (int seg = 0; seg < shape.segments; seg++) {
@@ -208,4 +203,8 @@ void DigitDisplayDemo::renderColonOrDash(const DisplayElement& el) {
     if (this->debug) {
         Serial.printf("Rendered %s at offset %d\n", el.name, el.offset);
     }
+}
+
+CRGB DualClock::currentColor() const {
+    return colorTable[currentColorIndex].ledColor;
 }

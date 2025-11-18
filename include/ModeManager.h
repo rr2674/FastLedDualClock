@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
+//todo: make this array as well, and name space the variables?
 enum Mode : uint8_t {
     MODE_PIXEL,
     MODE_DIGITS,

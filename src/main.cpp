@@ -6,9 +6,11 @@
 #include "MovingPixelDemo.h"
 #include "DigitDisplayDemo.h"
 #include "DisplayModel.h"
+#include "DualClock.h"
 
 // --- Configuration ---
-#define TEST_MODE_BUTTON_PIN 27
+#define CHANGE_APP_BUTTON_PIN 27
+#define CHANGE_DATE_TIME_COLOR_BUTTON_PIN 28
 #define LED_DATA_PIN 5
 #define NUM_LEDS 120
 #define LED_TYPE WS2811
@@ -16,9 +18,10 @@
 
 CRGB leds[NUM_LEDS];
 
-// --- Global objects ---
-Button modeButton(TEST_MODE_BUTTON_PIN);
+Button modeButton(CHANGE_APP_BUTTON_PIN);
 ModeManager modeManager;
+
+Button colorButton(CHANGE_DATE_TIME_COLOR_BUTTON_PIN);
 
 MovingPixelDemo pixelDemo;
 DigitDisplayDemo digitDemo;
@@ -38,6 +41,8 @@ void setup() {
 
   pixelDemo.begin(leds, NUM_LEDS);
   digitDemo.begin(leds, NUM_LEDS);
+  dualClock.begin(leds, NUM_LEDS);
+
 }
 
 void loop() {
@@ -52,6 +57,10 @@ void loop() {
         FastLED.clear();
         FastLED.show();
 
+    }
+
+    if (colorButton.pressed()) {
+        dualClock.switchColor()();
     }
 
     switch (modeManager.getMode()) {

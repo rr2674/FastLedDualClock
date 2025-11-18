@@ -1,7 +1,7 @@
 #include "DigitDisplayDemo.h"
 
+//todo: let's eliminate globals,make everything instance-based
 extern const int NUM_TIME_ELEMENTS;
-extern DisplayElement timeDisplay[];
 
 void DigitDisplayDemo::begin(CRGB* leds_, int numLeds_) {
     this->leds = leds_;
