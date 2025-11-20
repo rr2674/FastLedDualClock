@@ -18,6 +18,12 @@ public:
     void begin(CRGB* leds_, int numLeds_);
     void update();
     void reset();
+    // Returns the current hour in 24-hour format (0–23)
+    int getHour(bool as24hr = true) const;
+
+    void switchHourFormat();
+    void setHourFormat(bool use24hr);
+    bool is24HourFormat() const { return use24Hour; }
 
     void switchMode() {
         modeManager.next();
@@ -33,12 +39,13 @@ public:
 private:
     bool debug = false;
 
-    CRGB* leds;
+    CRGB* leds = nullptr;
 
     const char* wifiSSID;
     const char* wifiPassword;
 
     Timezone tz;
+    bool use24Hour = false;   // default = 12-hour mode
 
     DualClockModeManager  modeManager;
     ColorManager colorManager;
@@ -47,7 +54,6 @@ private:
 
     // use HTTP to sync with NTP servers
     bool syncTimeHTTP();
-    bool validateLayout(int numLeds);
 
     void displayTime();
     void displayDate();

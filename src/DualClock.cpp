@@ -4,13 +4,12 @@
 
 DualClock::DualClock(const char* ssid, const char* password)
     : wifiSSID(ssid),
-     wifiPassword(password)
+      wifiPassword(password)
 {
 #ifdef DEBUG_MODE
     this->debug = true;
     Serial.println("DualClock initialized in DEBUG mode");
 #endif
-
 
     this->reset();
 }
@@ -18,8 +17,8 @@ DualClock::DualClock(const char* ssid, const char* password)
 void DualClock::begin(CRGB* leds_, int numLeds_) {
     this->leds = leds_;
 
-    if (!validateLayout(numLeds_)) {
-        Serial.println("Warning: LED strip is too short for DualClock!");
+    if (!DisplayModel::validateLayout(numLeds_)) {
+        Serial.println("ERROR: LED strip is too short for DualClock!");
     }
 
     WiFi.begin(this->wifiSSID, this->wifiPassword);
@@ -64,32 +63,29 @@ void DualClock::reset() {
     Serial.println("DualClock reset");
 }
 
+int DualClock::getHour(bool as24hr) const {
+    time_t now = time(nullptr);
+    struct tm* local = localtime(&now);
+    int hour = local->tm_hour;
+
+    if (as24hr) {
+        return hour;
+    }
+
+    return (hour % 12 == 0) ? 12 : (hour % 12);
+}
+
+void DualClock::switchHourFormat() {
+    use24Hour = !use24Hour;
+}
+
+void DualClock::setHourFormat(bool use24hr) {
+    use24Hour = use24hr;
+}
+
 /*
 ** private methods
 */
-
-bool DualClock::validateLayout(int numLeds) {
-    int requiredPixels = 0;
-
-    for (int i = 0; i < NUM_TIME_DISPLAY_ELEMENTS; i++) {
-        const DisplayElement& el = timeDisplay[i];
-        const Element& shape = getElementShape(el.type);
-
-        int elementPixels = el.offset + (shape.segments * shape.pixels);
-
-        if (elementPixels > requiredPixels) {
-            requiredPixels = elementPixels;
-        }
-    }
-
-    if (requiredPixels > numLeds) {
-        Serial.printf("DualClock layout requires %d LEDs, but only %d available\n",
-                      requiredPixels, numLeds);
-        return false;
-    }
-
-    return true;
-}
 
 bool DualClock::syncTimeHTTP() {
     if (WiFi.status() != WL_CONNECTED) return false;
@@ -151,18 +147,30 @@ void DualClock::displayTime() {
     int minVal  = tinfo->tm_min;
     int secVal  = tinfo->tm_sec;
 
-    // min_ones
-    renderDigitElement(timeDisplay[0], minVal % 10);
-    // min_tens
-    renderDigitElement(timeDisplay[1], minVal / 10);
-    // hour_ones
-    renderDigitElement(timeDisplay[4], hourVal % 10);
-    // hour_tens
-    renderDigitElement(timeDisplay[5], hourVal / 10);
+    if (!use24Hour) {
+        // Convert to 12-hour format, hanlde midnight
+        hourVal = (hourVal % 12 == 0) ? 12 : (hourVal % 12);
+    }
 
-    // Blink colon
-    renderColonOrDash(timeDisplay[2], secVal % 2 == 0);
-    renderColonOrDash(timeDisplay[3], secVal % 2 == 0);
+    for (size_t i = 0; i < DisplayModel::getTimeDisplayCount(); ++i) {
+        const auto& el = DisplayModel::getTimeDisplay()[i];
+
+        switch (el.type) {
+            case DisplayElementType::DIGIT: {
+                int digit = DisplayModel::computeDigit(el.role, minVal, hourVal);
+                renderDigitElement(el, digit);
+                break;
+            }
+            case DisplayElementType::COLON: {
+                renderColonOrDash(el, secVal % 2 == 0);
+                break;
+            }
+            default: {
+                Serial.println("DualClock::displayTime() unexpected el.type");
+                break;
+            }            
+        }
+    }
 
     FastLED.show();
 
@@ -177,17 +185,29 @@ void DualClock::displayDate() {
     struct tm* tinfo = localtime(&now);
 
     int dayVal   = tinfo->tm_mday;
-    int monthVal = tinfo->tm_mon + 1;
+    int monthVal = tinfo->tm_mon + 1; // tm_mon is 0-based
+    int secVal   = tinfo->tm_sec;
 
-    // day_ones
-    renderDigitElement(dateDisplay[0], dayVal % 10);
-    // day_tens
-    renderDigitElement(dateDisplay[1], dayVal / 10);
-    // month_ones
-    renderDigitElement(dateDisplay[4], monthVal % 10);
-    // month_tens
-    renderDigitElement(dateDisplay[5], monthVal / 10);
+    for (size_t i = 0; i < DisplayModel::getDateDisplayCount(); ++i) {
+        const auto& el = DisplayModel::getDateDisplay()[i];
 
+        switch (el.type) {
+            case DisplayElementType::DIGIT: {
+                int digit = DisplayModel::computeDigit(el.role, dayVal, monthVal);
+                renderDigitElement(el, digit);
+                break;
+            }
+
+            case DisplayElementType::DASH: {
+                renderColonOrDash(el, secVal % 2 == 0); 
+                break;
+            }
+            default: {
+                Serial.println("DualClock::displayDate() unexpected el.type");
+                break;
+            }  
+        }
+    }
 
     FastLED.show();
 
@@ -197,11 +217,12 @@ void DualClock::displayDate() {
 }
 
 void DualClock::renderDigitElement(const DisplayElement& el, int number) {
-    const Element& shape = getElementShape(el.type);
+    const auto& shape = DisplayModel::getElementShape(el.type);
+    const auto& map = DisplayModel::getDigitSegmentMap();
 
-    for (int seg = 0; seg < shape.segments; seg++) {
-        bool isOn = digitSegmentMap[number][seg];
-        CRGB segColor = isOn ? this->colorManager.getColor() : CRGB::Black;
+    for (uint8_t seg = 0; seg < shape.segments; ++seg) {
+        bool isOn = map[number][seg];
+        CRGB segColor = isOn ?this->colorManager.getColor() : CRGB::Black;
 
         int segmentStart = el.offset + (seg * shape.pixels);
         fill_solid(&leds[segmentStart], shape.pixels, segColor);
@@ -213,11 +234,11 @@ void DualClock::renderDigitElement(const DisplayElement& el, int number) {
 }
 
 void DualClock::renderColonOrDash(const DisplayElement& el, bool on) {
-    const Element& shape = getElementShape(el.type);
+    const auto& shape = DisplayModel::getElementShape(el.type);
 
     CRGB c = on ? this->colorManager.getColor() : CRGB::Black;
 
-    for (int seg = 0; seg < shape.segments; seg++) {
+    for (uint8_t seg = 0; seg < shape.segments; ++seg) {
         int segmentStart = el.offset + (seg * shape.pixels);
         fill_solid(&leds[segmentStart], shape.pixels, c);
     }

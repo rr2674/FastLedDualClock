@@ -1,69 +1,64 @@
 #pragma once
 #include <FastLED.h>
+#include <cstddef>
 
-//todo: let's make a namespace for this
-enum DisplayElementType {
+enum class DisplayElementType {
     DIGIT,
     COLON,
     DASH
 };
 
-struct Element {
-    const uint8_t segments;  // number of logical segments
-    const uint8_t pixels;    // number of pixels per segment
+enum class DigitRole {
+    NONE,       // colon, dash, etc.
+    ONES_1,     // first pair (minutes, day)
+    TENS_1,
+    ONES_2,     // second pair (hours, month)
+    TENS_2
 };
 
-static const Element digit = { 7, 4 };
-static const Element colon = { 1, 1 };
-static const Element dash  = { 1, 1 };
-
-inline const Element& getElementShape(DisplayElementType type) {
-    switch (type) {
-        case DIGIT: return digit;
-        case COLON: return colon;
-        case DASH:  return dash;
-    }
-    return digit; // shouldn't happen
-}
+struct Element {
+    uint8_t segments;  // number of logical segments
+    uint8_t pixels;    // number of pixels per segment
+};
 
 struct DisplayElement {
     const char* name;        // "min_ones", "colon", "day_ones", "dash", etc.
-    DisplayElementType type; // type of element
+    DisplayElementType type;
+    DigitRole role;
     int offset;              // starting location of this element in the LED strip
     CRGB color;
 };
 
-static constexpr DisplayElement timeDisplay[] = {
-    { "min_ones",     DIGIT,  0, CRGB::Red },
-    { "min_tens",     DIGIT, 29, CRGB::Green },
-    { "colon_bottom", COLON, 58, CRGB::Yellow },
-    { "colon_top",    COLON, 61, CRGB::Yellow },
-    { "hour_ones",    DIGIT, 63, CRGB::Blue },
-    { "hour_tens",    DIGIT, 92, CRGB::White }
-};
-static const int NUM_TIME_DISPLAY_ELEMENTS = sizeof(timeDisplay) / sizeof(timeDisplay[0]);
+class DisplayModel {
+public:
+    DisplayModel() = delete; // all static, no instances
 
-static constexpr DisplayElement dateDisplay[] = {
-    { "day_ones",     DIGIT,  0, CRGB::Red },
-    { "day_tens",     DIGIT, 29, CRGB::Green },
-    { "dash_right",   DASH,  57, CRGB::Yellow },
-    { "dash_left",    DASH,  62, CRGB::Yellow },
-    { "month_ones",   DIGIT, 63, CRGB::Blue },
-    { "month_tens",   DIGIT, 92, CRGB::White }
-};
-static const int NUM_DATE_DISPLAY_ELEMENTS = sizeof(dateDisplay) / sizeof(dateDisplay[0]);
+    // Accessors for display tables
+    static const DisplayElement* getTimeDisplay();
+    static size_t getTimeDisplayCount();
 
-// A–G segment mapping for digits 0–9
-static const uint8_t digitSegmentMap[10][7] = {
-  // A,B,C,D,E,F,G
-  {1,1,1,0,1,1,1}, // 0
-  {1,0,0,0,1,0,0}, // 1
-  {1,1,0,1,0,1,1}, // 2
-  {1,1,0,1,1,1,0}, // 3
-  {1,0,1,1,1,0,0}, // 4
-  {0,1,1,1,1,1,0}, // 5
-  {0,1,1,1,1,1,1}, // 6
-  {1,1,0,0,1,0,0}, // 7
-  {1,1,1,1,1,1,1}, // 8
-  {1,1,1,1,1,0,0}  // 9
+    static const DisplayElement* getDateDisplay();
+    static size_t getDateDisplayCount();
+
+    // Accessor for digit segment map
+    static const uint8_t (*getDigitSegmentMap())[7];  // 7 segments to make a digit
+    static size_t getDigitCount();
+
+    // Accessor for shape info
+    static const Element& getElementShape(DisplayElementType type);
+
+    // Helper to compute digit value from role
+    static int computeDigit(DigitRole role, int primary, int secondary);
+
+    static bool validateLayout(int numLeds);
+
+private:
+    static const Element digit;
+    static const Element colon;
+    static const Element dash;
+
+    static const DisplayElement timeDisplay[];
+    static const DisplayElement dateDisplay[];
+    static const uint8_t digitSegmentMap[][7]; // 7 segments to make a digit
+
 };
