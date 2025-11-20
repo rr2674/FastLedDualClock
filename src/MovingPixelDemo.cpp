@@ -1,24 +1,58 @@
 #include "MovingPixelDemo.h"
 
 void MovingPixelDemo::begin(CRGB* leds_, int count) {
-    this->leds = leds_;
-    this->numLeds = count;
-    this->reset();
+    leds = leds_;
+    numLeds = count;
+    reset();
 }
 
 void MovingPixelDemo::reset() {
-    this->pos = 0;
-    this->lastMove = millis();
+    pos = 0;
+    lastMove = millis();
     Serial.println("MovingPixelDemo reset");
 }
 
 void MovingPixelDemo::update() {
-    if (millis() - this->lastMove >= this->speedMs) {
-        this->lastMove = millis();
-        this->pos = (this->pos + 1) % this->numLeds;
+    if (millis() - lastMove >= speedMs) {
+        lastMove = millis();
+        pos = (pos + 1) % numLeds;
 
-        FastLED.clear();
-        leds[this->pos] = CRGB::White;
+        // Fade all LEDs slightly — comet blur effect
+        for (int i = 0; i < numLeds; i++) {
+            leds[i].nscale8_video(200);
+            clampToBlack(leds[i]);  //eliminate microscopic ghost values
+        }
+
+        // Draw the head
+        CRGB baseColor =  colorManager.getColor();
+        leds[pos] = baseColor;
+
+        // Draw the tail
+        for (int i = 1; i <= tailLength; i++) {
+            int idx = (pos - i + numLeds) % numLeds;
+
+            // Exponential fade gives a better comet look
+            uint8_t fade = 255 * powf(0.6, i);
+
+            CRGB c = baseColor;
+            c.nscale8_video(fade);
+            leds[idx] += c;  // add instead of overwrite to keep blur smooth
+        }
+
         FastLED.show();
+    }
+}
+
+void MovingPixelDemo::setSpeed(unsigned long ms) { 
+    if (ms == 0) {
+        // double speed
+        speedMs *= 2;
+
+        // Wrap around if exceeding 800 ms
+        if (speedMs > 200) {
+            speedMs = 20;
+        }
+    } else {
+        speedMs = ms;
     }
 }

@@ -1,12 +1,9 @@
 #include "DigitDisplayDemo.h"
 
-//todo: let's eliminate globals,make everything instance-based
-extern const int NUM_TIME_ELEMENTS;
-
 void DigitDisplayDemo::begin(CRGB* leds_, int numLeds_) {
     this->leds = leds_;
 
-    if (!validateLayout(numLeds_)) {
+    if (!DisplayModel::validateLayout(numLeds_)) {
         Serial.println("ERROR: LED strip is too short for DigitDisplayDemo!");
     }
 
@@ -18,33 +15,24 @@ void DigitDisplayDemo::begin(CRGB* leds_, int numLeds_) {
 #endif
 }
 
-bool DigitDisplayDemo::validateLayout(int numLeds) {
-    int requiredPixels = 0;
-
-    for (int i = 0; i < NUM_TIME_DISPLAY_ELEMENTS; i++) {
-        const DisplayElement& el = timeDisplay[i];
-        const Element& shape = getElementShape(el.type);
-
-        int elementPixels = el.offset + (shape.segments * shape.pixels);
-
-        if (elementPixels > requiredPixels) {
-            requiredPixels = elementPixels;
-        }
-    }
-
-    if (requiredPixels > numLeds) {
-        Serial.printf("DigitDisplayDemo layout requires %d LEDs, but only %d available\n",
-                      requiredPixels, numLeds);
-        return false;
-    }
-
-    return true;
-}
-
 void DigitDisplayDemo::reset() {
     this->lastUpdate = 0;
     this->currentNumber = -1;
     Serial.println("DigitDisplayDemo reset");
+}
+
+void DigitDisplayDemo::setHoldTime(unsigned long ms) {
+    if (ms == 0) {
+        // double speed
+        holdTime *= 2;
+
+        // Wrap around if exceeding 16 seconds
+        if (holdTime > 16*1000) {
+            holdTime = 1*1000;
+        }
+    } else {
+        holdTime = ms;
+    }
 }
 
 void DigitDisplayDemo::update() {
@@ -57,18 +45,18 @@ void DigitDisplayDemo::update() {
 
         FastLED.clear();
 
-        // Render every element in the time display
-        for (int i = 0; i < NUM_TIME_DISPLAY_ELEMENTS; i++) {
-
-            const DisplayElement& el = timeDisplay[i];
+        // Loop through all elements in the time display
+        for (size_t i = 0; i < DisplayModel::getTimeDisplayCount(); ++i) {
+            const auto& el = DisplayModel::getTimeDisplay()[i];
 
             switch (el.type) {
-                case DIGIT:
-                    renderDigitElement(el, this->currentNumber);
+                case DisplayElementType::DIGIT: {
+                    int digit = DisplayModel::computeDigit(el.role, this->currentNumber, this->currentNumber);
+                    renderDigitElement(el, digit);
                     break;
-
-                case COLON:
-                case DASH:
+                }
+                case DisplayElementType::COLON:
+                case DisplayElementType::DASH:
                     renderColonOrDash(el);
                     break;
             }
@@ -79,11 +67,12 @@ void DigitDisplayDemo::update() {
 }
 
 void DigitDisplayDemo::renderDigitElement(const DisplayElement& el, int number) {
-    const Element& shape = getElementShape(el.type);
+    const auto& shape = DisplayModel::getElementShape(el.type);
+    const auto& map = DisplayModel::getDigitSegmentMap();
 
-    for (int seg = 0; seg < shape.segments; seg++) {
-        bool isOn = digitSegmentMap[number][seg];
-        CRGB segColor = isOn ? el.color  : CRGB::Black;
+    for (uint8_t seg = 0; seg < shape.segments; ++seg) {
+        bool isOn = map[number][seg];
+        CRGB segColor = isOn ? el.color : CRGB::Black;
 
         int segmentStart = el.offset + (seg * shape.pixels);
         fill_solid(&leds[segmentStart], shape.pixels, segColor);
@@ -95,9 +84,9 @@ void DigitDisplayDemo::renderDigitElement(const DisplayElement& el, int number) 
 }
 
 void DigitDisplayDemo::renderColonOrDash(const DisplayElement& el) {
-    const Element& shape = getElementShape(el.type);
+    const auto& shape = DisplayModel::getElementShape(el.type);
 
-    for (int seg = 0; seg < shape.segments; seg++) {
+    for (uint8_t seg = 0; seg < shape.segments; ++seg) {
         int segmentStart = el.offset + (seg * shape.pixels);
         fill_solid(&leds[segmentStart], shape.pixels, el.color);
     }

@@ -9,9 +9,9 @@ enum Mode : uint8_t {
     MODE_COUNT      // always keep this last
 };
 
-class ModeManager {
+class AppManager {
 public:
-    ModeManager() : current(MODE_DIGITS) {}
+    AppManager() : current(MODE_DIGITS) {}
 
     Mode getMode() const { return current; }
 
