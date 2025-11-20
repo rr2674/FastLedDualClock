@@ -1,23 +1,23 @@
 #include "DigitDisplayDemo.h"
 
 void DigitDisplayDemo::begin(CRGB* leds_, int numLeds_) {
-    this->leds = leds_;
+    leds = leds_;
 
     if (!DisplayModel::validateLayout(numLeds_)) {
         Serial.println("ERROR: LED strip is too short for DigitDisplayDemo!");
     }
 
-    this->reset();
+    reset();
 
 #if defined(DEBUG_MODE)
-    this->debug = true;
+    debug = true;
     Serial.println("DigitDisplayDemo initialized in DEBUG mode");
 #endif
 }
 
 void DigitDisplayDemo::reset() {
-    this->lastUpdate = 0;
-    this->currentNumber = -1;
+    lastUpdate = 0;
+    currentNumber = -1;
     Serial.println("DigitDisplayDemo reset");
 }
 
@@ -37,11 +37,11 @@ void DigitDisplayDemo::setHoldTime(unsigned long ms) {
 
 void DigitDisplayDemo::update() {
 
-    if (millis() - this->lastUpdate >= this->holdTime) {
-        this->lastUpdate = millis();
+    if (millis() - lastUpdate >= holdTime) {
+        lastUpdate = millis();
 
         // Increment test number 0..9
-        this->currentNumber = (this->currentNumber + 1) % 10;
+        currentNumber = (currentNumber + 1) % 10;
 
         FastLED.clear();
 
@@ -51,7 +51,7 @@ void DigitDisplayDemo::update() {
 
             switch (el.type) {
                 case DisplayElementType::DIGIT: {
-                    int digit = DisplayModel::computeDigit(el.role, this->currentNumber, this->currentNumber);
+                    int digit = DisplayModel::computeDigit(el.role, currentNumber, currentNumber);
                     renderDigitElement(el, digit);
                     break;
                 }
@@ -78,8 +78,8 @@ void DigitDisplayDemo::renderDigitElement(const DisplayElement& el, int number) 
         fill_solid(&leds[segmentStart], shape.pixels, segColor);
     }
 
-    if (this->debug) {
-        Serial.printf("Rendered %s digit %d at offset %d\n", el.name, number, el.offset);
+    if (debug) {
+        Serial.printf("[DEBUG] Rendered %s digit %d at offset %d\n", el.name, number, el.offset);
     }
 }
 
@@ -91,7 +91,7 @@ void DigitDisplayDemo::renderColonOrDash(const DisplayElement& el) {
         fill_solid(&leds[segmentStart], shape.pixels, el.color);
     }
 
-    if (this->debug) {
-        Serial.printf("Rendered %s at offset %d\n", el.name, el.offset);
+    if (debug) {
+        Serial.printf("[DEBUG] Rendered %s at offset %d\n", el.name, el.offset);
     }
 }

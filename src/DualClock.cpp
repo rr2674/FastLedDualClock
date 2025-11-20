@@ -7,33 +7,33 @@ DualClock::DualClock(const char* ssid, const char* password)
       wifiPassword(password)
 {
 #ifdef DEBUG_MODE
-    this->debug = true;
-    Serial.println("DualClock initialized in DEBUG mode");
+    debug = true;
+    Serial.println("[DEBUG] DualClock initialized in DEBUG mode");
 #endif
 
-    this->reset();
+    reset();
 }
 
 void DualClock::begin(CRGB* leds_, int numLeds_) {
-    this->leds = leds_;
+    leds = leds_;
 
     if (!DisplayModel::validateLayout(numLeds_)) {
         Serial.println("ERROR: LED strip is too short for DualClock!");
     }
 
-    WiFi.begin(this->wifiSSID, this->wifiPassword);
-    if (this->debug) {
-        Serial.print("Connecting to WiFi");
+    WiFi.begin(wifiSSID, wifiPassword);
+    if (debug) {
+        Serial.print("[DEBUG] Connecting to WiFi");
     }
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
-        if (this->debug) {
+        if (debug) {
             Serial.print(".");
         }
     }
     Serial.println("\nWiFi connected, IP: " + WiFi.localIP().toString());
 
-    while ( !this->syncTimeHTTP() ) {
+    while ( !syncTimeHTTP() ) {
         delay(2*1000); // wait 2 seconds before each retry
         Serial.println("Failed to sync time via HTTP. Retry...");
     }
@@ -43,16 +43,16 @@ void DualClock::begin(CRGB* leds_, int numLeds_) {
 
 void DualClock::update() {
 
-    if (millis() - this->lastUpdate >= 1 * 1000) {
-        this->lastUpdate = millis();
+    if (millis() - lastUpdate >= 1 * 1000) {
+        lastUpdate = millis();
 
         switch(modeManager.get()) {
             case DualClockModeManager::Mode::TIME:
-                this->displayTime();
+                displayTime();
                 break;
 
             case DualClockModeManager::Mode::DATE:
-                this->displayDate();
+                displayDate();
                 break;
         }
     }
@@ -141,8 +141,8 @@ bool DualClock::syncTimeHTTP() {
 
     // Sync ezTime with system time
     UTC.setTime(now);
-    this->tz.setLocation(F("America/Chicago"));
-    this->tz.setDefault();
+    tz.setLocation(F("America/Chicago"));
+    tz.setDefault();
 
     Serial.printf("Time synced: %02d:%02d:%02d UTC\n", hour, minute, second);
     return true;
@@ -183,7 +183,7 @@ void DualClock::displayTime() {
 
     FastLED.show();
 
-    if (this->debug) {
+    if (debug) {
         Serial.printf("[DEBUG] time[hh:mm] %02d:%02d\n", hourVal, minVal);
     }
 
@@ -220,7 +220,7 @@ void DualClock::displayDate() {
 
     FastLED.show();
 
-    if (this->debug) {
+    if (debug) {
         Serial.printf("[DEBUG] Date[mm-dd] %02d-%02d\n", dayVal, monthVal);
     }
 }
@@ -231,13 +231,13 @@ void DualClock::renderDigitElement(const DisplayElement& el, int number) {
 
     for (uint8_t seg = 0; seg < shape.segments; ++seg) {
         bool isOn = map[number][seg];
-        CRGB segColor = isOn ?this->colorManager.getColor() : CRGB::Black;
+        CRGB segColor = isOn ? colorManager.getColor() : CRGB::Black;
 
         int segmentStart = el.offset + (seg * shape.pixels);
         fill_solid(&leds[segmentStart], shape.pixels, segColor);
     }
 
-    if (this->debug) {
+    if (debug) {
         Serial.printf("[DEBUG] Rendered %s digit %d at offset %d\n", el.name, number, el.offset);
     }
 }
@@ -245,14 +245,14 @@ void DualClock::renderDigitElement(const DisplayElement& el, int number) {
 void DualClock::renderColonOrDash(const DisplayElement& el, bool on) {
     const auto& shape = DisplayModel::getElementShape(el.type);
 
-    CRGB c = on ? this->colorManager.getColor() : CRGB::Black;
+    CRGB c = on ? colorManager.getColor() : CRGB::Black;
 
     for (uint8_t seg = 0; seg < shape.segments; ++seg) {
         int segmentStart = el.offset + (seg * shape.pixels);
         fill_solid(&leds[segmentStart], shape.pixels, c);
     }
 
-    if (this->debug) {
+    if (debug) {
         Serial.printf("[DEBUG] Rendered %s at offset %d\n", el.name, el.offset);
     }
 }
