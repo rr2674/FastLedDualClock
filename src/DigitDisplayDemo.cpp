@@ -21,6 +21,20 @@ void DigitDisplayDemo::reset() {
     Serial.println("DigitDisplayDemo reset");
 }
 
+void DigitDisplayDemo::setHoldTime(unsigned long ms) {
+    if (ms == 0) {
+        // double speed
+        holdTime *= 2;
+
+        // Wrap around if exceeding 16 seconds
+        if (holdTime > 16*1000) {
+            holdTime = 1*1000;
+        }
+    } else {
+        holdTime = ms;
+    }
+}
+
 void DigitDisplayDemo::update() {
 
     if (millis() - this->lastUpdate >= this->holdTime) {

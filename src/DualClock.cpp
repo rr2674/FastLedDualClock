@@ -58,6 +58,15 @@ void DualClock::update() {
     }
 }
 
+void DualClock::switchMode() {
+    modeManager.next();
+
+    // Clear all LEDs; account for mapping differences between colon and dahs
+    FastLED.clear();
+    FastLED.show();
+
+}
+
 void DualClock::reset() {
     modeManager.reset();
     Serial.println("DualClock reset");

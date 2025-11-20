@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <FastLED.h>
 
-#include "ModeManager.h"
+#include "AppManager.h"
 #include "Button.h"
 #include "IndicatorLED.h"
 #include "MovingPixelDemo.h"
@@ -10,12 +10,13 @@
 #include "DualClock.h"
 
 // --- Configuration ---
-#define CHANGE_APP_BUTTON_PIN 27
-#define CHANGE_COLOR_BUTTON_PIN 26
-#define CHANGE_DATE_TIME_BUTTON_PIN 25
-//#define CHANGE_12HR_24HR_BUTTON_PIN ?
+#define CHANGE_APP_BUTTON1_PIN 27
+
+#define BUTTON2_PIN 26  // controls: dualclock color, moving pixel color, digit display speed
+#define BUTTON3_PIN 25  // dualclock display time or day, moving pixel speed
+#define BUTTON4_PIN 33  // dualclock time 24hr or 12hr
 #define LED_STRIP_DATA_PIN 5
-#define LED_INDICATOR_PIN 2
+#define LED_INDICATOR_PIN 21
 
 #define LED_EVENT_BLINK_MS 300
 
@@ -23,16 +24,18 @@
 #define LED_TYPE WS2811
 #define COLOR_ORDER BRG
 
-#define LED_BRIGHTNESS_HIGH 64   //a 0-255 value for how much to scale all leds before writing them out
-#define LED_BRIGHTNESS_LOW  20
+//a 0-255 value for how much to scale all leds before writing them out
+#define LED_BRIGHTNESS_HIGH 64   //25% brightness
+#define LED_BRIGHTNESS_LOW  20   // 8% brightness
 
 CRGB leds[NUM_LEDS];
 
-Button modeButton(CHANGE_APP_BUTTON_PIN);
-ModeManager modeManager;
+Button appButton(CHANGE_APP_BUTTON1_PIN);
+AppManager appManager;
 
-Button colorButton(CHANGE_COLOR_BUTTON_PIN);
-Button dateTimeButton(CHANGE_DATE_TIME_BUTTON_PIN);
+Button button2(BUTTON2_PIN);
+Button button3(BUTTON3_PIN);
+Button button4(BUTTON4_PIN);
 
 IndicatorLED statusLED(LED_INDICATOR_PIN);
 
@@ -53,6 +56,7 @@ void setup() {
     delay(1000);
 
     statusLED.begin();
+    statusLED.startSetupBlink();
 
     FastLED.addLeds<LED_TYPE, LED_STRIP_DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
     FastLED.setBrightness(LED_BRIGHTNESS_HIGH);
@@ -68,6 +72,8 @@ void setup() {
 
 void loop() {
 
+    //todo: watch for chip time drift... resync to ntp every Sunday?
+
     // --- Adjust brightness based on time ---
     int hour = dualClock.getHour();
     uint8_t newBrightness = (hour >= 21 || hour < 7) ? LED_BRIGHTNESS_LOW : LED_BRIGHTNESS_HIGH;
@@ -77,10 +83,10 @@ void loop() {
         lastBrightness = newBrightness;
     }
 
-    if (modeButton.pressed()) {
+    if (appButton.pressed()) {
 
         statusLED.blinkEvent(LED_EVENT_BLINK_MS);
-        modeManager.switchMode();
+        appManager.switchMode();
 
         pixelDemo.reset();
         digitDemo.reset();
@@ -90,19 +96,26 @@ void loop() {
 
     }
 
-    if (colorButton.pressed()) {
+    if (button2.pressed()) {
         statusLED.blinkEvent(LED_EVENT_BLINK_MS);
         pixelDemo.switchLEDColor();
         dualClock.switchLEDColor();
+        digitDemo.setHoldTime();
         
     }
 
-    if (dateTimeButton.pressed()) {
+    if (button3.pressed()) {
         statusLED.blinkEvent(LED_EVENT_BLINK_MS);
         dualClock.switchMode();
+        pixelDemo.setSpeed();
     }
 
-    switch (modeManager.getMode()) {
+    if (button4.pressed()) {
+        statusLED.blinkEvent(LED_EVENT_BLINK_MS);
+        dualClock.switchHourFormat();
+    }
+
+    switch (appManager.getMode()) {
         case Mode::MODE_PIXEL:
             pixelDemo.update();
             break;

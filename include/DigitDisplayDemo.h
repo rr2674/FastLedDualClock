@@ -8,12 +8,13 @@ public:
 
     void begin(CRGB* leds_, int numLeds_);
     void update();
+    void setHoldTime(unsigned long ms = 0);
     void reset();
 private:
     CRGB* leds = nullptr;
     unsigned long lastUpdate = 0;
     int currentNumber = -1;
-    const unsigned long holdTime = 5*1000;
+    unsigned long holdTime = 1*1000;
 
     bool debug = false;
 

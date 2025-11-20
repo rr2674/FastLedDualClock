@@ -25,10 +25,24 @@ void IndicatorLED::blinkEvent(unsigned long duration) {
 void IndicatorLED::update() {
     unsigned long now = millis();
     if (eventBlinking) {
+        // Check if the event period has ended
         if (now >= eventEndTime) {
             eventBlinking = false;
             digitalWrite(pin, solidState ? HIGH : LOW);
             ledState = solidState;
+        } else {
+            // Toggle LED at blink interval
+            if (now - lastToggle >= blinkInterval) {
+                lastToggle = now;
+                ledState = !ledState;
+                digitalWrite(pin, ledState ? HIGH : LOW);
+            }
+        }
+    } else {
+        // If not blinking, ensure LED matches solidState
+        if (ledState != solidState) {
+            ledState = solidState;
+            digitalWrite(pin, ledState ? HIGH : LOW);
         }
     }
 }

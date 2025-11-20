@@ -19,7 +19,8 @@ void MovingPixelDemo::update() {
 
         // Fade all LEDs slightly — comet blur effect
         for (int i = 0; i < numLeds; i++) {
-            leds[i].nscale8_video(200);  
+            leds[i].nscale8_video(200);
+            clampToBlack(leds[i]);  //eliminate microscopic ghost values
         }
 
         // Draw the head
@@ -39,5 +40,19 @@ void MovingPixelDemo::update() {
         }
 
         FastLED.show();
+    }
+}
+
+void MovingPixelDemo::setSpeed(unsigned long ms) { 
+    if (ms == 0) {
+        // double speed
+        speedMs *= 2;
+
+        // Wrap around if exceeding 800 ms
+        if (speedMs > 200) {
+            speedMs = 20;
+        }
+    } else {
+        speedMs = ms;
     }
 }

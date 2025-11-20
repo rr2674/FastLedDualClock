@@ -25,9 +25,8 @@ public:
     void setHourFormat(bool use24hr);
     bool is24HourFormat() const { return use24Hour; }
 
-    void switchMode() {
-        modeManager.next();
-    };
+    void switchMode(); 
+
     void switchLEDColor() {
         colorManager.next();
     }
