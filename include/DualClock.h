@@ -13,7 +13,7 @@
 
 class DualClock {
 public:
-    DualClock(const char* ssid, const char* password);
+    DualClock(const char* ssid, const char* password, const char* timezone);
 
     void begin(CRGB* leds_, int numLeds_);
     void update();
@@ -42,6 +42,7 @@ private:
 
     const char* wifiSSID;
     const char* wifiPassword;
+    const char* tzName;
 
     Timezone tz;
     bool use24Hour = false;   // default = 12-hour mode
@@ -49,9 +50,11 @@ private:
     DualClockModeManager  modeManager;
     ColorManager colorManager;
 
-    unsigned long lastUpdate = 0; //Timing variable, we only want to update() to do something once every second
+    unsigned long lastUpdate = 0; //we only want to update() to do something once every second
 
-    // use HTTP to sync with NTP servers
+    unsigned long lastHttpSync = 0;
+    const unsigned long httpSyncInterval = 12UL * 60UL * 60UL * 1000UL; // every 12 hours: hours * minutes * seconds * milliseconds
+
     bool syncTimeHTTP();
 
     void displayTime();
