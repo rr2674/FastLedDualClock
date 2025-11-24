@@ -3,14 +3,14 @@
 // ----------------------
 // Shapes
 // ----------------------
-const Element DisplayModel::digit = { 7, 4 };
-const Element DisplayModel::colon = { 1, 1 };
-const Element DisplayModel::dash  = { 1, 1 };
+const DisplayModel::Element DisplayModel::digit = { 7, 4 };
+const DisplayModel::Element DisplayModel::colon = { 1, 1 };
+const DisplayModel::Element DisplayModel::dash  = { 1, 1 };
 
 // ----------------------
 // Time table
 // ----------------------
-const DisplayElement DisplayModel::timeDisplay[6] = {
+const DisplayModel::DisplayElement DisplayModel::timeDisplay[6] = {
     { "min_ones",     DisplayElementType::DIGIT, DigitRole::ONES_1,  0, CRGB::Red    },
     { "min_tens",     DisplayElementType::DIGIT, DigitRole::TENS_1, 29, CRGB::Green  },
     { "colon_bottom", DisplayElementType::COLON, DigitRole::NONE,   58, CRGB::Yellow },
@@ -22,7 +22,7 @@ const DisplayElement DisplayModel::timeDisplay[6] = {
 // ----------------------
 // Date table
 // ----------------------
-const DisplayElement DisplayModel::dateDisplay[6] = {
+const DisplayModel::DisplayElement DisplayModel::dateDisplay[6] = {
     { "day_ones",     DisplayElementType::DIGIT, DigitRole::ONES_1,  0, CRGB::Red    },
     { "day_tens",     DisplayElementType::DIGIT, DigitRole::TENS_1, 29, CRGB::Green  },
     { "dash_right",   DisplayElementType::DASH,  DigitRole::NONE,   57, CRGB::Yellow },
@@ -52,10 +52,10 @@ const uint8_t DisplayModel::digitSegmentMap[10][7] = {
 // ----------------------
 // Accessors for time/date tables
 // ----------------------
-const DisplayElement* DisplayModel::getTimeDisplay() { return timeDisplay; }
+const DisplayModel::DisplayElement* DisplayModel::getTimeDisplay() { return timeDisplay; }
 size_t DisplayModel::getTimeDisplayCount() { return sizeof(timeDisplay)/sizeof(timeDisplay[0]); }
 
-const DisplayElement* DisplayModel::getDateDisplay() { return dateDisplay; }
+const DisplayModel::DisplayElement* DisplayModel::getDateDisplay() { return dateDisplay; }
 size_t DisplayModel::getDateDisplayCount() { return sizeof(dateDisplay)/sizeof(dateDisplay[0]); }
 
 // ----------------------
@@ -67,7 +67,7 @@ size_t DisplayModel::getDigitCount() { return sizeof(digitSegmentMap)/sizeof(dig
 // ----------------------
 // Accessor for shape info
 // ----------------------
-const Element& DisplayModel::getElementShape(DisplayElementType type) {
+const DisplayModel::Element& DisplayModel::getElementShape(DisplayElementType type) {
     switch(type) {
         case DisplayElementType::DIGIT: return digit;
         case DisplayElementType::COLON: return colon;

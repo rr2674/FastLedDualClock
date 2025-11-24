@@ -168,12 +168,12 @@ void DualClock::displayTime() {
         const auto& el = DisplayModel::getTimeDisplay()[i];
 
         switch (el.type) {
-            case DisplayElementType::DIGIT: {
+            case DisplayModel::DisplayElementType::DIGIT: {
                 int digit = DisplayModel::computeDigit(el.role, minVal, hourVal);
                 renderDigitElement(el, digit);
                 break;
             }
-            case DisplayElementType::COLON: {
+            case DisplayModel::DisplayElementType::COLON: {
                 renderColonOrDash(el, secVal % 2 == 0);
                 break;
             }
@@ -204,13 +204,13 @@ void DualClock::displayDate() {
         const auto& el = DisplayModel::getDateDisplay()[i];
 
         switch (el.type) {
-            case DisplayElementType::DIGIT: {
+            case DisplayModel::DisplayElementType::DIGIT: {
                 int digit = DisplayModel::computeDigit(el.role, dayVal, monthVal);
                 renderDigitElement(el, digit);
                 break;
             }
 
-            case DisplayElementType::DASH: {
+            case DisplayModel::DisplayElementType::DASH: {
                 renderColonOrDash(el, secVal % 2 == 0); 
                 break;
             }
@@ -228,7 +228,7 @@ void DualClock::displayDate() {
     }
 }
 
-void DualClock::renderDigitElement(const DisplayElement& el, int number) {
+void DualClock::renderDigitElement(const DisplayModel::DisplayElement& el, int number) {
     const auto& shape = DisplayModel::getElementShape(el.type);
     const auto& map = DisplayModel::getDigitSegmentMap();
 
@@ -245,7 +245,7 @@ void DualClock::renderDigitElement(const DisplayElement& el, int number) {
     }
 }
 
-void DualClock::renderColonOrDash(const DisplayElement& el, bool on) {
+void DualClock::renderColonOrDash(const DisplayModel::DisplayElement& el, bool on) {
     const auto& shape = DisplayModel::getElementShape(el.type);
 
     CRGB c = on ? colorManager.getColor() : CRGB::Black;

@@ -20,6 +20,6 @@ private:
 
     bool validateLayout(int numLeds);
 
-    void renderDigitElement(const DisplayElement& el, int number);
-    void renderColonOrDash(const DisplayElement& el);
+    void renderDigitElement(const DisplayModel::DisplayElement& el, int number);
+    void renderColonOrDash(const DisplayModel::DisplayElement& el);
 };

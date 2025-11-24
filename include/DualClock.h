@@ -61,7 +61,7 @@ private:
     void displayDate();
 
     void displayDigit(int digit, int offset);
-    void renderDigitElement(const DisplayElement& el, int number);
-    void renderColonOrDash(const DisplayElement& el, bool on);
+    void renderDigitElement(const DisplayModel::DisplayElement& el, int number);
+    void renderColonOrDash(const DisplayModel::DisplayElement& el, bool on);
 
 };

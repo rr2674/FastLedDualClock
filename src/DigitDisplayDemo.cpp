@@ -50,13 +50,13 @@ void DigitDisplayDemo::update() {
             const auto& el = DisplayModel::getTimeDisplay()[i];
 
             switch (el.type) {
-                case DisplayElementType::DIGIT: {
+                case DisplayModel::DisplayElementType::DIGIT: {
                     int digit = DisplayModel::computeDigit(el.role, currentNumber, currentNumber);
                     renderDigitElement(el, digit);
                     break;
                 }
-                case DisplayElementType::COLON:
-                case DisplayElementType::DASH:
+                case DisplayModel::DisplayElementType::COLON:
+                case DisplayModel::DisplayElementType::DASH:
                     renderColonOrDash(el);
                     break;
             }
@@ -66,7 +66,7 @@ void DigitDisplayDemo::update() {
     }
 }
 
-void DigitDisplayDemo::renderDigitElement(const DisplayElement& el, int number) {
+void DigitDisplayDemo::renderDigitElement(const DisplayModel::DisplayElement& el, int number) {
     const auto& shape = DisplayModel::getElementShape(el.type);
     const auto& map = DisplayModel::getDigitSegmentMap();
 
@@ -83,7 +83,7 @@ void DigitDisplayDemo::renderDigitElement(const DisplayElement& el, int number) 
     }
 }
 
-void DigitDisplayDemo::renderColonOrDash(const DisplayElement& el) {
+void DigitDisplayDemo::renderColonOrDash(const DisplayModel::DisplayElement& el) {
     const auto& shape = DisplayModel::getElementShape(el.type);
 
     for (uint8_t seg = 0; seg < shape.segments; ++seg) {
