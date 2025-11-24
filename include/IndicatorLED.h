@@ -3,7 +3,7 @@
 
 class IndicatorLED {
 public:
-    IndicatorLED(uint8_t pin);
+     explicit IndicatorLED(uint8_t pin);
 
     void begin();
 

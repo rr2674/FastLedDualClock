@@ -2,9 +2,10 @@
 #include "DisplayModel.h"
 #include "ColorManager.h"
 
-DualClock::DualClock(const char* ssid, const char* password)
+DualClock::DualClock(const char* ssid, const char* password, const char* timezone)
     : wifiSSID(ssid),
-      wifiPassword(password)
+      wifiPassword(password),
+      tzName(timezone)
 {
 #ifdef DEBUG_MODE
     debug = true;
@@ -45,6 +46,15 @@ void DualClock::update() {
 
     if (millis() - lastUpdate >= 1 * 1000) {
         lastUpdate = millis();
+
+        // Periodic HTTP sync
+        if (lastUpdate - lastHttpSync >= httpSyncInterval) {
+            lastHttpSync = lastUpdate;
+
+            if (!syncTimeHTTP()) {
+                Serial.println("[WARNING] HTTP time sync FAILED.");
+            }
+        }
 
         switch(modeManager.get()) {
             case DualClockModeManager::Mode::TIME:
@@ -109,39 +119,32 @@ bool DualClock::syncTimeHTTP() {
         return false;
     }
 
-    String payload = http.getString();
+    DynamicJsonDocument doc(2048);
+    DeserializationError error = deserializeJson(doc, http.getString());
     http.end();
 
-    DynamicJsonDocument doc(2048);
-    DeserializationError error = deserializeJson(doc, payload);
     if (error) {
         Serial.println("JSON parse error!");
         return false;
     }
 
-    const char* datetime = doc["datetime"]; // e.g., "2025-11-03T15:43:02.123456+00:00"
-    int year   = atoi(String(datetime).substring(0,4).c_str());
-    int month  = atoi(String(datetime).substring(5,7).c_str());
-    int day    = atoi(String(datetime).substring(8,10).c_str());
-    int hour   = atoi(String(datetime).substring(11,13).c_str());
-    int minute = atoi(String(datetime).substring(14,16).c_str());
-    int second = atoi(String(datetime).substring(17,19).c_str());
+    const char* datetime = doc["datetime"]; 
+    // e.g., "2025-11-03T15:43:02.123456+00:00"
+    struct tm t = {};
+    t.tm_year = atoi(datetime + 0)  - 1900;
+    t.tm_mon  = atoi(datetime + 5)  - 1;
+    t.tm_mday = atoi(datetime + 8);
+    t.tm_hour = atoi(datetime + 11);
+    t.tm_min  = atoi(datetime + 14);
+    t.tm_sec  = atoi(datetime + 17);
 
-    struct tm t;
-    t.tm_year = year - 1900;
-    t.tm_mon  = month - 1;
-    t.tm_mday = day;
-    t.tm_hour = hour;
-    t.tm_min  = minute;
-    t.tm_sec  = second;
     time_t now = mktime(&t);
-
     struct timeval tv = { now, 0 };
     settimeofday(&tv, nullptr);
 
     // Sync ezTime with system time
     UTC.setTime(now);
-    tz.setLocation(F("America/Chicago"));
+    tz.setLocation(tzName);
     tz.setDefault();
 
     Serial.printf("Time synced: %02d:%02d:%02d UTC\n", hour, minute, second);

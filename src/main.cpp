@@ -46,7 +46,7 @@ DigitDisplayDemo digitDemo;
 const char* WIFI_SSID = WIFI_SSID_OVERRIDE;
 const char* WIFI_PASSWORD = WIFI_PASSWORD_OVERRIDE;
 
-DualClock dualClock(WIFI_SSID, WIFI_PASSWORD);
+DualClock dualClock(WIFI_SSID, WIFI_PASSWORD, "America/Chicago");
 
 uint8_t lastBrightness = 0;
 
@@ -72,8 +72,6 @@ void setup() {
 
 void loop() {
 
-    //todo: watch for chip time drift... resync to ntp every Sunday?
-
     // --- Adjust brightness based on time ---
     int hour = dualClock.getHour();
     uint8_t newBrightness = (hour >= 21 || hour < 7) ? LED_BRIGHTNESS_LOW : LED_BRIGHTNESS_HIGH;
@@ -86,7 +84,7 @@ void loop() {
     if (appButton.pressed()) {
 
         statusLED.blinkEvent(LED_EVENT_BLINK_MS);
-        appManager.switchMode();
+        appManager.switchApp();
 
         pixelDemo.reset();
         digitDemo.reset();
@@ -115,16 +113,16 @@ void loop() {
         dualClock.switchHourFormat();
     }
 
-    switch (appManager.getMode()) {
-        case Mode::MODE_PIXEL:
+    switch (appManager.getApp()) {
+        case AppManager::AppName::PIXEL:
             pixelDemo.update();
             break;
 
-        case Mode::MODE_DIGITS:
+        case AppManager::AppName::DIGITS:
             digitDemo.update();
             break;
         
-        case Mode::MODE_DUALCLOCK:
+        case AppManager::AppName::DUALCLOCK:
             dualClock.update();
             break;
     }
