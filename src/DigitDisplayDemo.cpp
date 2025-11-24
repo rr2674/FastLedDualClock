@@ -51,8 +51,7 @@ void DigitDisplayDemo::update() {
 
             switch (el.type) {
                 case DisplayModel::DisplayElementType::DIGIT: {
-                    int digit = DisplayModel::computeDigit(el.role, currentNumber, currentNumber);
-                    renderDigitElement(el, digit);
+                    renderDigitElement(el, currentNumber);
                     break;
                 }
                 case DisplayModel::DisplayElementType::COLON:
