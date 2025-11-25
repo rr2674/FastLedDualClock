@@ -17,7 +17,9 @@ void DigitDisplayDemo::begin(CRGB* leds_, int numLeds_) {
 
 void DigitDisplayDemo::reset() {
     lastUpdate = 0;
-    currentNumber = -1;
+    currentNumber = 0;
+    shouldRedraw = (mode == Mode::STEP_ROTATE);
+
     Serial.println("DigitDisplayDemo reset");
 }
 
@@ -35,14 +37,28 @@ void DigitDisplayDemo::setHoldTime(unsigned long ms) {
     }
 }
 
+void  DigitDisplayDemo::nextNumber() {
+    currentNumber = (currentNumber + 1) % 10;
+    shouldRedraw = true;
+}
+
 void DigitDisplayDemo::update() {
 
-    if (millis() - lastUpdate >= holdTime) {
-        lastUpdate = millis();
+    unsigned long now = millis();
 
-        // Increment test number 0..9
-        currentNumber = (currentNumber + 1) % 10;
+    if (mode == Mode::AUTO_ROTATE) {
+        if (now - lastUpdate >= holdTime) {
+            lastUpdate = now;
 
+            // Increment test number 0..9
+            currentNumber = (currentNumber + 1) % 10;
+            shouldRedraw = true;
+        }
+    } 
+
+    if ( shouldRedraw ) {
+
+        shouldRedraw = false;
         FastLED.clear();
 
         // Loop through all elements in the time display

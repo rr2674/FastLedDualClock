@@ -232,9 +232,20 @@ void DualClock::renderDigitElement(const DisplayModel::DisplayElement& el, int n
     const auto& shape = DisplayModel::getElementShape(el.type);
     const auto& map = DisplayModel::getDigitSegmentMap();
 
+    // Turn off tens digit if 12-hour mode and tens is 0
+    bool blackoutLeadingZero = false;
+    if (!use24Hour && el.role == DisplayModel::DigitRole::TENS_2 && number == 0) {
+        blackoutLeadingZero = true;
+    }
+
     for (uint8_t seg = 0; seg < shape.segments; ++seg) {
         bool isOn = map[number][seg];
         CRGB segColor = isOn ? colorManager.getColor() : CRGB::Black;
+
+        //override color assigment
+        if (blackoutLeadingZero) {
+            segColor = CRGB::Black;
+        }
 
         int segmentStart = el.offset + (seg * shape.pixels);
         fill_solid(&leds[segmentStart], shape.pixels, segColor);
