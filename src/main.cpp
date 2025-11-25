@@ -40,7 +40,7 @@ Button button4(BUTTON4_PIN);
 IndicatorLED statusLED(LED_INDICATOR_PIN);
 
 MovingPixelDemo pixelDemo;
-DigitDisplayDemo digitDemo;
+DigitDisplayDemo digitDemo(DigitDisplayDemo::Mode::STEP_ROTATE);
 
 // WiFi credentials from build flags
 const char* WIFI_SSID = WIFI_SSID_OVERRIDE;
@@ -98,7 +98,8 @@ void loop() {
         statusLED.blinkEvent(LED_EVENT_BLINK_MS);
         pixelDemo.switchLEDColor();
         dualClock.switchLEDColor();
-        digitDemo.setHoldTime();
+        //digitDemo.setHoldTime();
+        digitDemo.nextNumber();
         
     }
 

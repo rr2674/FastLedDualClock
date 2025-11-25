@@ -168,12 +168,12 @@ void DualClock::displayTime() {
         const auto& el = DisplayModel::getTimeDisplay()[i];
 
         switch (el.type) {
-            case DisplayElementType::DIGIT: {
+            case DisplayModel::DisplayElementType::DIGIT: {
                 int digit = DisplayModel::computeDigit(el.role, minVal, hourVal);
                 renderDigitElement(el, digit);
                 break;
             }
-            case DisplayElementType::COLON: {
+            case DisplayModel::DisplayElementType::COLON: {
                 renderColonOrDash(el, secVal % 2 == 0);
                 break;
             }
@@ -204,13 +204,13 @@ void DualClock::displayDate() {
         const auto& el = DisplayModel::getDateDisplay()[i];
 
         switch (el.type) {
-            case DisplayElementType::DIGIT: {
+            case DisplayModel::DisplayElementType::DIGIT: {
                 int digit = DisplayModel::computeDigit(el.role, dayVal, monthVal);
                 renderDigitElement(el, digit);
                 break;
             }
 
-            case DisplayElementType::DASH: {
+            case DisplayModel::DisplayElementType::DASH: {
                 renderColonOrDash(el, secVal % 2 == 0); 
                 break;
             }
@@ -228,13 +228,24 @@ void DualClock::displayDate() {
     }
 }
 
-void DualClock::renderDigitElement(const DisplayElement& el, int number) {
+void DualClock::renderDigitElement(const DisplayModel::DisplayElement& el, int number) {
     const auto& shape = DisplayModel::getElementShape(el.type);
     const auto& map = DisplayModel::getDigitSegmentMap();
+
+    // Turn off tens digit if 12-hour mode and tens is 0
+    bool blackoutLeadingZero = false;
+    if (!use24Hour && el.role == DisplayModel::DigitRole::TENS_2 && number == 0) {
+        blackoutLeadingZero = true;
+    }
 
     for (uint8_t seg = 0; seg < shape.segments; ++seg) {
         bool isOn = map[number][seg];
         CRGB segColor = isOn ? colorManager.getColor() : CRGB::Black;
+
+        //override color assigment
+        if (blackoutLeadingZero) {
+            segColor = CRGB::Black;
+        }
 
         int segmentStart = el.offset + (seg * shape.pixels);
         fill_solid(&leds[segmentStart], shape.pixels, segColor);
@@ -245,7 +256,7 @@ void DualClock::renderDigitElement(const DisplayElement& el, int number) {
     }
 }
 
-void DualClock::renderColonOrDash(const DisplayElement& el, bool on) {
+void DualClock::renderColonOrDash(const DisplayModel::DisplayElement& el, bool on) {
     const auto& shape = DisplayModel::getElementShape(el.type);
 
     CRGB c = on ? colorManager.getColor() : CRGB::Black;
