@@ -1,14 +1,14 @@
 #include "ColorManager.h"
 
 const ColorManager::ColorInfo ColorManager::table[ColorManager::COUNT] = {
+    { "Magenta", CRGB::Magenta },
     { "Red",     CRGB::Red },
     { "Green",   CRGB::Green },
     { "Blue",    CRGB::Blue },
     { "White",   CRGB::White },
     { "Yellow",  CRGB::Yellow },
     { "Orange",  CRGB::Orange },
-    { "Cyan",    CRGB::Cyan },
-    { "Magenta", CRGB::Magenta }
+    { "Cyan",    CRGB::Cyan }
 };
 
 CRGB ColorManager::getColor() const {

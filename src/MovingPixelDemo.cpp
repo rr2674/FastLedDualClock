@@ -9,7 +9,9 @@ void MovingPixelDemo::begin(CRGB* leds_, int count) {
 void MovingPixelDemo::reset() {
     pos = 0;
     lastMove = millis();
+#ifdef DEBUG_MODE
     Serial.println("MovingPixelDemo reset");
+#endif
 }
 
 void MovingPixelDemo::update() {
