@@ -11,7 +11,7 @@ public:
         COUNT_      // always keep this last
     };
 
-    AppManager() : current(AppName::DIGITS) {}
+    AppManager() : current(AppName::DUALCLOCK) {}
 
     AppName getApp() const { return current; }
 
@@ -21,7 +21,9 @@ public:
             static_cast<uint8_t>(AppName::COUNT_)
         );
         
+#ifdef DEBUG_MODE
         Serial.printf("Switched App to: %s\n", appNameToString(current));
+#endif
     }
 
 private:

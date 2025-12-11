@@ -18,8 +18,9 @@ public:
     void begin(CRGB* leds_, int numLeds_);
     void update();
     void reset();
-    // Returns the current hour in 24-hour format (0–23)
-    int getHour(bool as24hr = true) const;
+    int getHour(bool as24hr = true) const;     // Returns the current hour in 24-hour format (0–23)
+
+    void checkWiFi();
 
     void switchHourFormat();
     void setHourFormat(bool use24hr);
@@ -43,6 +44,9 @@ private:
     const char* wifiSSID;
     const char* wifiPassword;
     const char* tzName;
+
+    unsigned long wifiDownStart = 0;
+    unsigned long lastWifiReconnectAttempt = 0;
 
     Timezone tz;
     bool use24Hour = false;   // default = 12-hour mode

@@ -39,7 +39,9 @@ void DualClock::begin(CRGB* leds_, int numLeds_) {
         Serial.println("Failed to sync time via HTTP. Retry...");
     }
 
-    Serial.println("Setup complete!");
+    if (debug) {
+        Serial.println("[DEBUG] Setup complete!");
+    }
 }
 
 void DualClock::update() {
@@ -49,9 +51,9 @@ void DualClock::update() {
 
         // Periodic HTTP sync
         if (lastUpdate - lastHttpSync >= httpSyncInterval) {
-            lastHttpSync = lastUpdate;
-
-            if (!syncTimeHTTP()) {
+            if (syncTimeHTTP()) {
+                lastHttpSync = lastUpdate;
+            } else{
                 Serial.println("[WARNING] HTTP time sync FAILED.");
             }
         }
@@ -71,7 +73,7 @@ void DualClock::update() {
 void DualClock::switchMode() {
     modeManager.next();
 
-    // Clear all LEDs; account for mapping differences between colon and dahs
+    // Clear all LEDs; account for mapping differences between colon and dash
     FastLED.clear();
     FastLED.show();
 
@@ -79,7 +81,9 @@ void DualClock::switchMode() {
 
 void DualClock::reset() {
     modeManager.reset();
-    Serial.println("DualClock reset");
+    if (debug)  {
+        Serial.println("[DEBUG] DualClock reset");
+    }
 }
 
 int DualClock::getHour(bool as24hr) const {
@@ -107,6 +111,7 @@ void DualClock::setHourFormat(bool use24hr) {
 */
 
 bool DualClock::syncTimeHTTP() {
+
     if (WiFi.status() != WL_CONNECTED) return false;
 
     HTTPClient http;
@@ -147,8 +152,44 @@ bool DualClock::syncTimeHTTP() {
     tz.setLocation(tzName);
     tz.setDefault();
 
-    Serial.printf("Time synced: %02d:%02d:%02d UTC\n", hour, minute, second);
+    if (debug) {
+        Serial.printf("[DEBUG] Time synced: %02d:%02d:%02d UTC\n", hour, minute, second);
+    }
+
     return true;
+}
+
+void DualClock::checkWiFi() {
+
+    if (WiFi.status() == WL_CONNECTED) {
+        wifiDownStart = 0;                  // reset downtime
+        return;
+    }
+
+    // Start the downtime clock
+    if (wifiDownStart == 0) {
+        wifiDownStart = millis();
+        if (debug) {
+            Serial.println("[DEBUG] DualClock::checkWifi() Disconnected detected");
+        }
+    }
+
+    unsigned long now = millis();
+
+    // Reboot if WiFi has been down for > 30 minutes
+    const unsigned long THIRTY_MINUTES = 30UL * 60UL * 1000UL;
+    if (now - wifiDownStart > THIRTY_MINUTES) {
+        ESP.restart();
+    }
+
+    // Attempt reconnect every 5 seconds
+    if (now - lastWifiReconnectAttempt > 5*1000) {
+        lastWifiReconnectAttempt = now;
+        if (debug)  {
+            Serial.println("[DEBUG] DualClock::checkWifi() Attempting reconnect...");
+        }
+        WiFi.reconnect();
+    }
 }
 
 void DualClock::displayTime() {
