@@ -33,6 +33,7 @@ void DualClock::begin(CRGB* leds_, int numLeds_) {
         }
     }
     Serial.println("\nWiFi connected, IP: " + WiFi.localIP().toString());
+    Serial.println("Wifi MAC: " + WiFi.macAddress());
 
     while ( !syncTimeHTTP() ) {
         delay(2*1000); // wait 2 seconds before each retry
@@ -179,6 +180,8 @@ void DualClock::checkWiFi() {
     // Reboot if WiFi has been down for > 30 minutes
     const unsigned long THIRTY_MINUTES = 30UL * 60UL * 1000UL;
     if (now - wifiDownStart > THIRTY_MINUTES) {
+        FastLED.clear();
+        FastLED.show();
         ESP.restart();
     }
 
