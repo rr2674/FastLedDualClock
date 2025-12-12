@@ -101,8 +101,10 @@ bool DisplayModel::validateLayout(int numLeds) {
         }
     }
 
+#ifdef DEBUG_MODE
     Serial.printf("DisplayModel::validateLayout() requiredPixels=%d, available=%d\n",
                   requiredPixels, numLeds);
+#endif
 
     return requiredPixels <= numLeds;
 }

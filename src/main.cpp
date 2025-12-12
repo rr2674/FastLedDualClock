@@ -52,21 +52,48 @@ DualClock dualClock(WIFI_SSID, WIFI_PASSWORD, "America/Chicago");
 
 uint8_t lastBrightness = 0;
 
-/*
-** helper function prototypes
-*/
-void spoof_mac_address();
-bool parseMac(const char* str, uint8_t* mac);
+void overrideWiFiMAC() {
+#ifdef WIFI_MAC_STR
+    Serial.println("Overriding WiFi MAC address...");
 
+    uint8_t mac[6];
+    if (sscanf(WIFI_MAC_STR,
+               "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
+               &mac[0], &mac[1], &mac[2],
+               &mac[3], &mac[4], &mac[5]) != 6) {
+        Serial.println("Invalid MAC string!");
+        return;
+    }
+
+    WiFi.mode(WIFI_OFF);
+    delay(100);
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    if (esp_wifi_init(&cfg) != ESP_OK) {
+        Serial.println("esp_wifi_init failed!");
+        return;
+    }
+
+    if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK) {
+        Serial.println("set_mode failed!");
+        return;
+    }
+
+    if (esp_wifi_set_mac(WIFI_IF_STA, mac) != ESP_OK) {
+        Serial.println("set_mac failed!");
+        return;
+    }
+
+#endif
+}
 
 void setup() {
 
     Serial.begin(115200);
-    delay(1000);
+    Serial.flush();
+    delay(5*1000); // wait for serial monitor to connect
 
-#ifdef WIFI_MAC_STR
-    spoof_mac_address();
-#endif
+    overrideWiFiMAC();
 
     statusLED.begin();
     statusLED.startSetupBlink();
@@ -146,47 +173,3 @@ void loop() {
     statusLED.update();
 
 }
-
-/* 
-* helper functions
-*/
-
-// Convert "DE:AD:BE:EF:CA:FE" → {0xDE,0xAD,...}
-bool parseMac(const char* str, uint8_t* mac) {
-    return sscanf(str, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
-                  &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]) == 6;
-}
-
-void spoof_mac_address() {
-
-    Serial.print("Original MAC is: ");
-    Serial.println(WiFi.macAddress());
-
-    // Disable WiFi before changing MAC
-    WiFi.mode(WIFI_OFF);
-    delay(100);
-    esp_wifi_restore();   // clears WiFi config (NVS)
-    delay(50);
-
-    uint8_t customMAC[6];
-    if (!parseMac(WIFI_MAC_STR, customMAC)) {
-        Serial.println("Invalid MAC string format!");
-        return;
-    }
-
-    Serial.print("Changing MAC to: ");
-    Serial.println(WIFI_MAC_STR);
-
-    esp_err_t err = esp_wifi_set_mac(WIFI_IF_STA, customMAC);
-    if (err != ESP_OK) {
-        Serial.printf("esp_wifi_set_mac() FAILED, error = %d\n", err);
-    }
-
-    // Re-enable WiFi AFTER setting MAC
-    WiFi.mode(WIFI_STA);
-
-    Serial.print("Active MAC is: ");
-    Serial.println(WiFi.macAddress());
-}
-
-
