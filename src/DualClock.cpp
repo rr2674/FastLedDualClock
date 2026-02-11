@@ -165,16 +165,19 @@ bool DualClock::syncTimeHTTP()
 
     String payload = http.getString();
 
-    Serial.printf("Payload length: %d\n", payload.length());
-    Serial.println("Payload preview:");
-    Serial.println(payload.substring(0, 200));
-
-    for (size_t i = 0; i < http.headers(); i++)
+    if (debug)
     {
-        Serial.printf("Header[%d]: %s = %s\n",
-                      i,
-                      http.headerName(i).c_str(),
-                      http.header(i).c_str());
+        Serial.printf("Payload length: %d\n", payload.length());
+        Serial.println("Payload preview:");
+        Serial.println(payload.substring(0, 200));
+
+        for (size_t i = 0; i < http.headers(); i++)
+        {
+            Serial.printf("Header[%d]: %s = %s\n",
+                          i,
+                          http.headerName(i).c_str(),
+                          http.header(i).c_str());
+        }
     }
 
     DynamicJsonDocument doc(2048);
