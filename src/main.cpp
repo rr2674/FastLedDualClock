@@ -7,16 +7,18 @@
 #include "Button.h"
 #include "IndicatorLED.h"
 #include "MovingPixelDemo.h"
+#ifdef ENABLE_DIGIT_DEMO
 #include "DigitDisplayDemo.h"
+#endif
 #include "DisplayModel.h"
 #include "DualClock.h"
 
 // --- Configuration ---
 #define CHANGE_APP_BUTTON1_PIN 27
 
-#define BUTTON2_PIN 26  // controls: dualclock color, moving pixel color, digit display  number
-#define BUTTON3_PIN 25  // dualclock display time or day, moving pixel speed
-#define BUTTON4_PIN 33  // dualclock time 24hr or 12hr
+#define BUTTON2_PIN 26 // controls: dualclock color, moving pixel color, digit display  number
+#define BUTTON3_PIN 25 // dualclock display time or day, moving pixel speed
+#define BUTTON4_PIN 33 // dualclock time 24hr or 12hr
 #define LED_STRIP_DATA_PIN 5
 #define LED_INDICATOR_PIN 21
 
@@ -26,9 +28,9 @@
 #define LED_TYPE WS2811
 #define COLOR_ORDER BRG
 
-//a 0-255 value for how much to scale all leds before writing them out
-#define LED_BRIGHTNESS_HIGH 64   //25% brightness
-#define LED_BRIGHTNESS_LOW  20   // 8% brightness
+// a 0-255 value for how much to scale all leds before writing them out
+#define LED_BRIGHTNESS_HIGH 64 // 25% brightness
+#define LED_BRIGHTNESS_LOW 20  // 8% brightness
 
 CRGB leds[NUM_LEDS];
 
@@ -42,17 +44,21 @@ Button button4(BUTTON4_PIN);
 IndicatorLED statusLED(LED_INDICATOR_PIN);
 
 MovingPixelDemo pixelDemo;
+
+#ifdef ENABLE_DIGIT_DEMO
 DigitDisplayDemo digitDemo(DigitDisplayDemo::Mode::STEP_ROTATE);
+#endif
 
 // WiFi credentials from build flags
-const char* WIFI_SSID = WIFI_SSID_OVERRIDE;
-const char* WIFI_PASSWORD = WIFI_PASSWORD_OVERRIDE;
+const char *WIFI_SSID = WIFI_SSID_OVERRIDE;
+const char *WIFI_PASSWORD = WIFI_PASSWORD_OVERRIDE;
 
 DualClock dualClock(WIFI_SSID, WIFI_PASSWORD, "America/Chicago");
 
 uint8_t lastBrightness = 0;
 
-void overrideWiFiMAC() {
+void overrideWiFiMAC()
+{
 #ifdef WIFI_MAC_STR
     Serial.println("Overriding WiFi MAC address...");
 
@@ -60,7 +66,8 @@ void overrideWiFiMAC() {
     if (sscanf(WIFI_MAC_STR,
                "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
                &mac[0], &mac[1], &mac[2],
-               &mac[3], &mac[4], &mac[5]) != 6) {
+               &mac[3], &mac[4], &mac[5]) != 6)
+    {
         Serial.println("Invalid MAC string!");
         return;
     }
@@ -69,17 +76,20 @@ void overrideWiFiMAC() {
     delay(100);
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    if (esp_wifi_init(&cfg) != ESP_OK) {
+    if (esp_wifi_init(&cfg) != ESP_OK)
+    {
         Serial.println("esp_wifi_init failed!");
         return;
     }
 
-    if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK) {
+    if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK)
+    {
         Serial.println("set_mode failed!");
         return;
     }
 
-    if (esp_wifi_set_mac(WIFI_IF_STA, mac) != ESP_OK) {
+    if (esp_wifi_set_mac(WIFI_IF_STA, mac) != ESP_OK)
+    {
         Serial.println("set_mac failed!");
         return;
     }
@@ -87,11 +97,12 @@ void overrideWiFiMAC() {
 #endif
 }
 
-void setup() {
+void setup()
+{
 
     Serial.begin(115200);
     Serial.flush();
-    delay(5*1000); // wait for serial monitor to connect
+    delay(5 * 1000); // wait for serial monitor to connect
 
     overrideWiFiMAC();
 
@@ -102,74 +113,84 @@ void setup() {
     FastLED.setBrightness(LED_BRIGHTNESS_HIGH);
 
     pixelDemo.begin(leds, NUM_LEDS);
+#ifdef ENABLE_DIGIT_DEMO
     digitDemo.begin(leds, NUM_LEDS);
+#endif
     dualClock.begin(leds, NUM_LEDS);
 
     statusLED.stopSetupBlink();
     statusLED.setSolid(true);
-
 }
 
-void loop() {
+void loop()
+{
 
     // --- Adjust brightness based on time ---
     int hour = dualClock.getHour();
     uint8_t newBrightness = (hour >= 21 || hour < 7) ? LED_BRIGHTNESS_LOW : LED_BRIGHTNESS_HIGH;
 
-    if (newBrightness != lastBrightness) {
+    if (newBrightness != lastBrightness)
+    {
         FastLED.setBrightness(newBrightness);
         lastBrightness = newBrightness;
     }
 
-    dualClock.checkWiFi();      // reconnect to WiFi if needed, or reboot esp if WiFi down for > 30 minutes
+    dualClock.checkWiFi(); // reconnect to WiFi if needed, or reboot esp if WiFi down for > 30 minutes
 
-    if (appButton.pressed()) {
+    if (appButton.pressed())
+    {
 
         statusLED.blinkEvent(LED_EVENT_BLINK_MS);
         appManager.switchApp();
 
         pixelDemo.reset();
+#ifdef ENABLE_DIGIT_DEMO
         digitDemo.reset();
+#endif
 
         FastLED.clear();
         FastLED.show();
-
     }
 
-    if (button2.pressed()) {
+    if (button2.pressed())
+    {
         statusLED.blinkEvent(LED_EVENT_BLINK_MS);
         pixelDemo.switchLEDColor();
         dualClock.switchLEDColor();
-        //digitDemo.setHoldTime();
-        digitDemo.nextNumber();  // manually advance number instead of changing the hold time
-        
+#ifdef ENABLE_DIGIT_DEMO
+        digitDemo.nextNumber(); // manually advance number instead of changing the hold time
+#endif
     }
 
-    if (button3.pressed()) {
+    if (button3.pressed())
+    {
         statusLED.blinkEvent(LED_EVENT_BLINK_MS);
         dualClock.switchMode();
         pixelDemo.setSpeed();
     }
 
-    if (button4.pressed()) {
+    if (button4.pressed())
+    {
         statusLED.blinkEvent(LED_EVENT_BLINK_MS);
         dualClock.switchHourFormat();
     }
 
-    switch (appManager.getApp()) {
-        case AppManager::AppName::PIXEL:
-            pixelDemo.update();
-            break;
+    switch (appManager.getApp())
+    {
+    case AppManager::AppName::PIXEL:
+        pixelDemo.update();
+        break;
 
-        case AppManager::AppName::DIGITS:
-            digitDemo.update();
-            break;
-        
-        case AppManager::AppName::DUALCLOCK:
-            dualClock.update();
-            break;
+#ifdef ENABLE_DIGIT_DEMO
+    case AppManager::AppName::DIGITS:
+        digitDemo.update();
+        break;
+#endif
+
+    case AppManager::AppName::DUALCLOCK:
+        dualClock.update();
+        break;
     }
 
     statusLED.update();
-
 }
